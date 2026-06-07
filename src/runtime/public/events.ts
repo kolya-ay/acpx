@@ -1,5 +1,6 @@
 import type {
   AvailableCommand,
+  PlanEntry,
   SessionConfigOption,
   SessionModeId,
   ToolCallContent,
@@ -12,7 +13,7 @@ import type {
   AcpRuntimeUsageCost,
   AcpSessionUpdateTag,
 } from "./contract.js";
-import { validateAvailableCommand } from "./sdk-validators.js";
+import { validateAvailableCommand, validatePlanEntry } from "./sdk-validators.js";
 import { asOptionalString, asString, asTrimmedString, forwardMeta, isRecord } from "./shared.js";
 
 const TOOL_OUTPUT_SUMMARY_MAX_CHARS = 500;
@@ -79,18 +80,10 @@ type StatusTextResolver = (payload: Record<string, unknown>) => string | null;
 
 const STATUS_TEXT_RESOLVERS: Partial<Record<AcpSessionUpdateTag, StatusTextResolver>> = {
   session_info_update: sessionInfoStatusText,
-  plan: planStatusText,
 };
 
 function sessionInfoStatusText(payload: Record<string, unknown>): string {
   return asTrimmedString(payload.summary) || asTrimmedString(payload.message) || "session updated";
-}
-
-function planStatusText(payload: Record<string, unknown>): string | null {
-  const entries = Array.isArray(payload.entries) ? payload.entries : [];
-  const first = entries.find((entry) => isRecord(entry));
-  const content = asTrimmedString(first?.content);
-  return content ? `plan: ${content}` : null;
 }
 
 function resolveTextChunk(params: {
@@ -416,7 +409,7 @@ const PROMPT_EVENT_PARSERS: Record<string, PromptEventParser> = {
   current_mode_update: currentModeUpdateEvent,
   config_option_update: configOptionUpdateEvent,
   session_info_update: (payload) => statusUpdateEvent("session_info_update", payload),
-  plan: (payload) => statusUpdateEvent("plan", payload),
+  plan: planUpdateEvent,
   client_operation: clientOperationEvent,
   update: updateStatusEvent,
   done: () => null,
@@ -491,6 +484,18 @@ function configOptionUpdateEvent(payload: Record<string, unknown>): AcpRuntimeEv
   return {
     type: "config_option_update",
     configOptions,
+    ...forwardMeta(payload),
+  };
+}
+
+function planUpdateEvent(payload: Record<string, unknown>): AcpRuntimeEvent {
+  const raw = Array.isArray(payload.entries) ? payload.entries : [];
+  const entries = raw
+    .map((entry) => validatePlanEntry(entry))
+    .filter((entry): entry is PlanEntry => entry !== undefined);
+  return {
+    type: "plan",
+    entries,
     ...forwardMeta(payload),
   };
 }

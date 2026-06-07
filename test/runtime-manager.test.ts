@@ -3268,3 +3268,59 @@ test("AcpRuntimeManager getStatus omits usage and availableCommands when the rec
   assert.equal(status.usage, undefined);
   assert.equal(status.availableCommands, undefined);
 });
+
+test("AcpRuntimeManager preserves current_plan across the prepareRuntimeTurn clone cycle", async () => {
+  const plan = {
+    entries: [
+      { content: "research repo", priority: "high" as const, status: "in_progress" as const },
+      { content: "write fix", priority: "medium" as const, status: "pending" as const },
+    ],
+  };
+  const record = makeSessionRecord({
+    acpxRecordId: "plan-roundtrip-session",
+    acpSessionId: "plan-roundtrip-sid",
+    agentCommand: "codex --acp",
+    cwd: "/workspace",
+    acpx: {
+      current_plan: plan,
+    },
+  });
+  const store = new InMemorySessionStore([record]);
+  const manager = new AcpRuntimeManager(
+    createRuntimeOptions({ cwd: "/workspace", sessionStore: store }),
+    {
+      clientFactory: () =>
+        ({
+          start: async () => {},
+          close: async () => {},
+          createSession: async () => ({ sessionId: "unused" }),
+          loadSession: async () => ({ agentSessionId: "unused" }),
+          hasReusableSession: () => true,
+          supportsLoadSession: () => true,
+          supportsResumeSession: () => false,
+          loadSessionWithOptions: async () => ({ agentSessionId: "unused" }),
+          getAgentLifecycleSnapshot: () => ({ running: true }),
+          prompt: async () => ({ stopReason: "end_turn" }),
+          requestCancelActivePrompt: async () => false,
+          hasActivePrompt: () => false,
+          setSessionMode: async () => {},
+          setSessionConfigOption: async () => {},
+          clearEventHandlers: () => {},
+          setEventHandlers: () => {},
+        }) as never,
+    },
+  );
+
+  const turn = manager.startTurn({
+    handle: createHandle("plan-roundtrip-session"),
+    text: "next step",
+    mode: "prompt",
+    sessionMode: "persistent",
+    requestId: "req-plan-roundtrip",
+  });
+  const { result } = await collectTurn(turn);
+
+  assert.deepEqual(result, { status: "completed", stopReason: "end_turn" });
+  const stored = await store.load("plan-roundtrip-session");
+  assert.deepEqual(stored?.acpx?.current_plan, plan);
+});

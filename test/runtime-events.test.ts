@@ -239,20 +239,6 @@ test("parsePromptEventLine handles runtime status-style updates", () => {
   assert.deepEqual(
     parsePromptEventLine(
       JSON.stringify({
-        sessionUpdate: "plan",
-        entries: [{ content: "first step" }],
-      }),
-    ),
-    {
-      type: "status",
-      text: "plan: first step",
-      tag: "plan",
-    },
-  );
-
-  assert.deepEqual(
-    parsePromptEventLine(
-      JSON.stringify({
         type: "client_operation",
         method: "write_file",
         status: "ok",
@@ -307,7 +293,10 @@ test("parsePromptEventLine ignores unsupported structured payloads and treats ra
     type: "status",
     text: "operation",
   });
-  assert.equal(parsePromptEventLine(JSON.stringify({ type: "plan", entries: [] })), null);
+  assert.deepEqual(parsePromptEventLine(JSON.stringify({ type: "plan", entries: [] })), {
+    type: "plan",
+    entries: [],
+  });
   assert.deepEqual(parsePromptEventLine(JSON.stringify(["not", "an", "object"])), {
     type: "status",
     text: '["not","an","object"]',
@@ -414,9 +403,12 @@ test("parsePromptEventLine covers status and tool summary fallbacks", () => {
       tag: "session_info_update",
     },
   );
-  assert.equal(
+  assert.deepEqual(
     parsePromptEventLine(JSON.stringify({ sessionUpdate: "plan", entries: ["skip"] })),
-    null,
+    {
+      type: "plan",
+      entries: [],
+    },
   );
   assert.deepEqual(
     parsePromptEventLine(
@@ -767,6 +759,76 @@ test("parsePromptEventLine config_option_update returns empty configOptions when
     {
       type: "config_option_update",
       configOptions: [],
+    },
+  );
+});
+
+test("parsePromptEventLine emits plan as a top-level event with PlanEntry[]", () => {
+  assert.deepEqual(
+    parsePromptEventLine(
+      JSON.stringify({
+        sessionUpdate: "plan",
+        entries: [
+          { content: "research", priority: "high", status: "in_progress" },
+          { content: "draft", priority: "medium", status: "pending" },
+          { content: "review", priority: "low", status: "completed" },
+        ],
+      }),
+    ),
+    {
+      type: "plan",
+      entries: [
+        { content: "research", priority: "high", status: "in_progress" },
+        { content: "draft", priority: "medium", status: "pending" },
+        { content: "review", priority: "low", status: "completed" },
+      ],
+    },
+  );
+});
+
+test("parsePromptEventLine plan returns empty entries when array is missing", () => {
+  assert.deepEqual(parsePromptEventLine(JSON.stringify({ sessionUpdate: "plan" })), {
+    type: "plan",
+    entries: [],
+  });
+});
+
+test("parsePromptEventLine plan forwards _meta when present", () => {
+  assert.deepEqual(
+    parsePromptEventLine(
+      JSON.stringify({
+        sessionUpdate: "plan",
+        entries: [{ content: "step", priority: "high", status: "pending" }],
+        _meta: { source: "agent" },
+      }),
+    ),
+    {
+      type: "plan",
+      entries: [{ content: "step", priority: "high", status: "pending" }],
+      _meta: { source: "agent" },
+    },
+  );
+});
+
+test("parsePromptEventLine plan drops entries with invalid priority/status or empty content", () => {
+  assert.deepEqual(
+    parsePromptEventLine(
+      JSON.stringify({
+        sessionUpdate: "plan",
+        entries: [
+          { content: "ok", priority: "high", status: "pending" },
+          { content: "bad priority", priority: "urgent", status: "pending" },
+          { content: "bad status", priority: "high", status: "blocked" },
+          { content: "   ", priority: "high", status: "pending" },
+          { content: "missing priority", status: "pending" },
+          { content: "missing status", priority: "low" },
+          "string entry",
+        ],
+      }),
+    ),
+    {
+      type: "plan",
+      entries: [{ content: "ok", priority: "high", status: "pending" }],
     },
   );
 });

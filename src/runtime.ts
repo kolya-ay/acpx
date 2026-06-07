@@ -65,6 +65,7 @@ export type {
   AcpSessionStore,
   AcpSessionUpdateTag,
   AvailableCommand,
+  PlanEntry,
   SessionAgentOptions,
   SessionConfigOption,
   SessionModeId,

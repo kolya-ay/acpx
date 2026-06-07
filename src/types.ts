@@ -3,6 +3,7 @@ import type {
   AnyMessage,
   AvailableCommand,
   McpServer,
+  PlanEntry,
   RequestPermissionRequest,
   SessionNotification,
   SessionConfigOption,
@@ -357,6 +358,7 @@ export type SessionAcpxState = {
   model_control?: "config_option" | "legacy_set_model";
   available_commands?: AvailableCommand[];
   config_options?: SessionConfigOption[];
+  current_plan?: { entries: PlanEntry[] };
   session_options?: {
     model?: string;
     allowed_tools?: string[];

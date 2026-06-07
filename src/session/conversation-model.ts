@@ -558,6 +558,7 @@ export function cloneSessionAcpxState(
       ? state.available_commands.map((command) => ({ ...command }))
       : undefined,
     config_options: state.config_options ? deepClone(state.config_options) : undefined,
+    current_plan: state.current_plan ? deepClone(state.current_plan) : undefined,
     session_options: cloneSessionOptions(state.session_options),
   };
 }
@@ -771,6 +772,11 @@ const SESSION_UPDATE_HANDLERS: Record<string, SessionUpdateHandler> = {
     if (update.sessionUpdate === "config_option_update") {
       const configOptions = deepClone(update.configOptions);
       applyConfigOptionsModelState(acpx, configOptions);
+    }
+  },
+  plan: (_conversation, acpx, update) => {
+    if (update.sessionUpdate === "plan") {
+      acpx.current_plan = { entries: deepClone(update.entries) };
     }
   },
 };

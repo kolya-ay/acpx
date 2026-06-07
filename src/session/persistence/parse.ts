@@ -1,5 +1,8 @@
 import { isSessionConfigOption } from "../../runtime/public/events.js";
-import { validateAvailableCommand } from "../../runtime/public/sdk-validators.js";
+import {
+  validateAvailableCommand,
+  validatePlanEntry,
+} from "../../runtime/public/sdk-validators.js";
 import type {
   SessionAcpxState,
   SessionEventLog,
@@ -61,6 +64,29 @@ function parseAvailableCommands(raw: unknown): SessionAcpxState["available_comma
     .map((entry) => validateAvailableCommand(entry))
     .filter((entry): entry is PersistedAvailableCommand => entry !== undefined);
   return commands.length > 0 ? commands : undefined;
+}
+
+type PersistedPlanEntry = NonNullable<SessionAcpxState["current_plan"]>["entries"][number];
+
+function parsePlanEntries(raw: unknown): PersistedPlanEntry[] | undefined {
+  if (!Array.isArray(raw)) {
+    return undefined;
+  }
+  return raw
+    .map((entry) => validatePlanEntry(entry))
+    .filter((entry): entry is PersistedPlanEntry => entry !== undefined);
+}
+
+function parseCurrentPlan(raw: unknown): SessionAcpxState["current_plan"] | undefined {
+  const record = asRecord(raw);
+  if (!record) {
+    return undefined;
+  }
+  const entries = parsePlanEntries(record.entries);
+  if (!entries) {
+    return undefined;
+  }
+  return { entries };
 }
 
 function parseTokenUsage(
@@ -404,6 +430,11 @@ function parseAcpxState(raw: unknown): SessionAcpxState | undefined {
   const availableCommands = parseAvailableCommands(record.available_commands);
   if (availableCommands) {
     state.available_commands = availableCommands;
+  }
+
+  const currentPlan = parseCurrentPlan(record.current_plan);
+  if (currentPlan) {
+    state.current_plan = currentPlan;
   }
 
   assignParsedSessionOptions(state, record.session_options);

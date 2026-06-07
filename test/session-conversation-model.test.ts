@@ -123,6 +123,22 @@ test("conversation model captures prompt, chunks, tool calls, and metadata", () 
     {
       sessionId: "session-1",
       update: {
+        sessionUpdate: "plan",
+        entries: [
+          { content: "research repo", priority: "high", status: "in_progress" },
+          { content: "write fix", priority: "medium", status: "pending" },
+        ],
+      },
+    } as SessionNotification,
+    "2026-02-27T10:00:06.500Z",
+  );
+
+  acpxState = recordSessionUpdate(
+    conversation,
+    acpxState,
+    {
+      sessionId: "session-1",
+      update: {
         sessionUpdate: "usage_update",
         used: 100,
         size: 1000,
@@ -200,6 +216,12 @@ test("conversation model captures prompt, chunks, tool calls, and metadata", () 
   assert.deepEqual(acpxState?.available_commands, [
     { name: "create_plan", description: "create plan" },
   ]);
+  assert.deepEqual(acpxState?.current_plan, {
+    entries: [
+      { content: "research repo", priority: "high", status: "in_progress" },
+      { content: "write fix", priority: "medium", status: "pending" },
+    ],
+  });
 });
 
 test("config option updates synchronize and clear advertised model state", () => {
@@ -439,4 +461,21 @@ test("cloneSessionAcpxState preserves desired mode id", () => {
     allowed_tools: ["Read", "Grep"],
     max_turns: 7,
   });
+});
+
+test("cloneSessionAcpxState preserves current_plan", () => {
+  const original: SessionAcpxState = {
+    current_plan: {
+      entries: [
+        { content: "research repo", priority: "high", status: "in_progress" },
+        { content: "write fix", priority: "medium", status: "pending" },
+      ],
+    },
+  };
+
+  const cloned = cloneSessionAcpxState(original);
+
+  assert.deepEqual(cloned?.current_plan, original.current_plan);
+  assert.notEqual(cloned?.current_plan, original.current_plan);
+  assert.notEqual(cloned?.current_plan?.entries, original.current_plan?.entries);
 });
