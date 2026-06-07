@@ -29,6 +29,7 @@ export type {
   AvailableCommand,
   PlanEntry,
   SessionConfigOption,
+  SessionInfoUpdate,
   SessionModeId,
 } from "@agentclientprotocol/sdk";
 
@@ -254,6 +255,19 @@ export type AcpRuntimeEvent =
   | {
       type: "plan";
       entries: PlanEntry[];
+      _meta?: AcpEventMeta;
+    }
+  /**
+   * Mirrors ACP `session_info_update`. Carries session metadata updates
+   * from the agent — `title` and/or `updatedAt`. A field set to `null`
+   * explicitly clears the session's stored value; an omitted field
+   * means "no change". Consumers should distinguish present-as-null
+   * from absent.
+   */
+  | {
+      type: "session_info_update";
+      title?: string | null;
+      updatedAt?: string | null;
       _meta?: AcpEventMeta;
     }
   /**

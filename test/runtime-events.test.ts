@@ -225,20 +225,6 @@ test("parsePromptEventLine handles runtime status-style updates", () => {
   assert.deepEqual(
     parsePromptEventLine(
       JSON.stringify({
-        sessionUpdate: "session_info_update",
-        summary: "ready",
-      }),
-    ),
-    {
-      type: "status",
-      text: "ready",
-      tag: "session_info_update",
-    },
-  );
-
-  assert.deepEqual(
-    parsePromptEventLine(
-      JSON.stringify({
         type: "client_operation",
         method: "write_file",
         status: "ok",
@@ -391,16 +377,6 @@ test("parsePromptEventLine covers status and tool summary fallbacks", () => {
     {
       type: "config_option_update",
       configOptions: [],
-    },
-  );
-  assert.deepEqual(
-    parsePromptEventLine(
-      JSON.stringify({ sessionUpdate: "session_info_update", message: "ready" }),
-    ),
-    {
-      type: "status",
-      text: "ready",
-      tag: "session_info_update",
     },
   );
   assert.deepEqual(
@@ -829,6 +805,63 @@ test("parsePromptEventLine plan drops entries with invalid priority/status or em
     {
       type: "plan",
       entries: [{ content: "ok", priority: "high", status: "pending" }],
+    },
+  );
+});
+
+test("parsePromptEventLine emits session_info_update as a top-level event", () => {
+  assert.deepEqual(
+    parsePromptEventLine(
+      JSON.stringify({
+        sessionUpdate: "session_info_update",
+        title: "My Session",
+        updatedAt: "2026-02-27T10:00:06.000Z",
+      }),
+    ),
+    {
+      type: "session_info_update",
+      title: "My Session",
+      updatedAt: "2026-02-27T10:00:06.000Z",
+    },
+  );
+});
+
+test("parsePromptEventLine session_info_update forwards null to clear fields", () => {
+  assert.deepEqual(
+    parsePromptEventLine(
+      JSON.stringify({
+        sessionUpdate: "session_info_update",
+        title: null,
+        updatedAt: null,
+      }),
+    ),
+    {
+      type: "session_info_update",
+      title: null,
+      updatedAt: null,
+    },
+  );
+});
+
+test("parsePromptEventLine session_info_update omits absent fields", () => {
+  assert.deepEqual(parsePromptEventLine(JSON.stringify({ sessionUpdate: "session_info_update" })), {
+    type: "session_info_update",
+  });
+});
+
+test("parsePromptEventLine session_info_update forwards _meta when present", () => {
+  assert.deepEqual(
+    parsePromptEventLine(
+      JSON.stringify({
+        sessionUpdate: "session_info_update",
+        title: "Working",
+        _meta: { source: "agent" },
+      }),
+    ),
+    {
+      type: "session_info_update",
+      title: "Working",
+      _meta: { source: "agent" },
     },
   );
 });
