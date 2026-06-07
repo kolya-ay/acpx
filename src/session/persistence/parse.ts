@@ -1,3 +1,4 @@
+import { isSessionConfigOption } from "../../runtime/public/events.js";
 import { validateAvailableCommand } from "../../runtime/public/sdk-validators.js";
 import type {
   SessionAcpxState,
@@ -35,10 +36,19 @@ function hasModelConfigOption(options: unknown): boolean {
 }
 
 function parseConfigOptions(raw: unknown): SessionAcpxState["config_options"] | undefined {
-  if (!Array.isArray(raw) || !raw.every((entry) => asRecord(entry) !== undefined)) {
+  if (!Array.isArray(raw)) {
     return undefined;
   }
-  return raw as SessionAcpxState["config_options"];
+  // Narrow on the SDK `SessionConfigOption` discriminator (`type` tag) before
+  // accepting entries. Persisted entries from older acpx versions or unknown
+  // variants are dropped here rather than passed through the runtime.
+  const filtered = raw.filter(
+    (entry): entry is NonNullable<SessionAcpxState["config_options"]>[number] => {
+      const r = asRecord(entry);
+      return !!r && isSessionConfigOption(r);
+    },
+  );
+  return filtered.length > 0 ? filtered : undefined;
 }
 
 type PersistedAvailableCommand = NonNullable<SessionAcpxState["available_commands"]>[number];

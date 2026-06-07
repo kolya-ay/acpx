@@ -1,5 +1,7 @@
 import type {
   AvailableCommand,
+  SessionConfigOption,
+  SessionModeId,
   ToolCallContent,
   ToolCallLocation,
   ToolKind,
@@ -76,31 +78,9 @@ function resolveStatusTextForTag(params: {
 type StatusTextResolver = (payload: Record<string, unknown>) => string | null;
 
 const STATUS_TEXT_RESOLVERS: Partial<Record<AcpSessionUpdateTag, StatusTextResolver>> = {
-  current_mode_update: currentModeStatusText,
-  config_option_update: configOptionStatusText,
   session_info_update: sessionInfoStatusText,
   plan: planStatusText,
 };
-
-function currentModeStatusText(payload: Record<string, unknown>): string {
-  const mode =
-    asTrimmedString(payload.currentModeId) ||
-    asTrimmedString(payload.modeId) ||
-    asTrimmedString(payload.mode);
-  return mode ? `mode updated: ${mode}` : "mode updated";
-}
-
-function configOptionStatusText(payload: Record<string, unknown>): string {
-  const id = asTrimmedString(payload.id) || asTrimmedString(payload.configOptionId);
-  const value =
-    asTrimmedString(payload.currentValue) ||
-    asTrimmedString(payload.value) ||
-    asTrimmedString(payload.optionValue);
-  if (id && value) {
-    return `config updated: ${id}=${value}`;
-  }
-  return id ? `config updated: ${id}` : "config updated";
-}
 
 function sessionInfoStatusText(payload: Record<string, unknown>): string {
   return asTrimmedString(payload.summary) || asTrimmedString(payload.message) || "session updated";
@@ -433,8 +413,8 @@ const PROMPT_EVENT_PARSERS: Record<string, PromptEventParser> = {
     resolveTextChunk({ payload, stream: "thought", tag: "agent_thought_chunk" }),
   usage_update: usageUpdateEvent,
   available_commands_update: availableCommandsUpdateEvent,
-  current_mode_update: (payload) => statusUpdateEvent("current_mode_update", payload),
-  config_option_update: (payload) => statusUpdateEvent("config_option_update", payload),
+  current_mode_update: currentModeUpdateEvent,
+  config_option_update: configOptionUpdateEvent,
   session_info_update: (payload) => statusUpdateEvent("session_info_update", payload),
   plan: (payload) => statusUpdateEvent("plan", payload),
   client_operation: clientOperationEvent,
@@ -475,6 +455,43 @@ function buildUsageUpdateEvent(parts: {
     ...(size != null ? { size } : {}),
     ...(cost ? { cost } : {}),
     ...(breakdown ? { breakdown } : {}),
+  };
+}
+
+function currentModeUpdateEvent(payload: Record<string, unknown>): AcpRuntimeEvent | null {
+  const currentModeId: SessionModeId | undefined = asTrimmedString(payload.currentModeId);
+  if (!currentModeId) {
+    return null;
+  }
+  return {
+    type: "current_mode_update",
+    currentModeId,
+    ...forwardMeta(payload),
+  };
+}
+
+/**
+ * Narrow predicate matching the SDK `SessionConfigOption` discriminated union
+ * on its `type` tag (`"select" | "boolean"`). Used by both the runtime event
+ * parser and the persistence parser before casting an unknown record to
+ * `SessionConfigOption`.
+ */
+export function isSessionConfigOption(entry: Record<string, unknown>): boolean {
+  return entry.type === "select" || entry.type === "boolean";
+}
+
+function configOptionUpdateEvent(payload: Record<string, unknown>): AcpRuntimeEvent {
+  const raw = Array.isArray(payload.configOptions) ? payload.configOptions : [];
+  // Filter on the SDK discriminator before casting — the wire payload is
+  // JSON-RPC validated upstream by the ACP client, but unknown variants would
+  // otherwise sneak through `isRecord` alone.
+  const configOptions = raw.filter(
+    (entry): entry is SessionConfigOption => isRecord(entry) && isSessionConfigOption(entry),
+  );
+  return {
+    type: "config_option_update",
+    configOptions,
+    ...forwardMeta(payload),
   };
 }
 

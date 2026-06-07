@@ -1,5 +1,7 @@
 import type {
   AvailableCommand,
+  SessionConfigOption,
+  SessionModeId,
   ToolCallContent,
   ToolCallLocation,
   ToolKind,
@@ -22,7 +24,11 @@ export type { AcpPermissionDecision, AcpPermissionRequest } from "../../types.js
  * SDK shapes re-exported from `acpx/runtime` so embedders can type acpx's
  * public surface without reaching into `@agentclientprotocol/sdk` directly.
  */
-export type { AvailableCommand } from "@agentclientprotocol/sdk";
+export type {
+  AvailableCommand,
+  SessionConfigOption,
+  SessionModeId,
+} from "@agentclientprotocol/sdk";
 
 /**
  * `_meta` envelope carried on top-level event variants. Mirrors the ACP SDK
@@ -211,6 +217,29 @@ export type AcpRuntimeEvent =
   | {
       type: "available_commands_update";
       availableCommands: AvailableCommand[];
+      _meta?: AcpEventMeta;
+    }
+  /**
+   * Mirrors ACP `current_mode_update`. Carries the SDK `SessionModeId`
+   * (currently a string alias) for the newly active mode.
+   *
+   * @deprecated The ACP spec is phasing `session/set_mode` out in favor of
+   * unified `set_config_option` with `category: "mode"`. Consumers should
+   * prefer reading mode state from `config_option_update`. Removal targeted
+   * for acpx 0.12.0.
+   */
+  | {
+      type: "current_mode_update";
+      currentModeId: SessionModeId;
+      _meta?: AcpEventMeta;
+    }
+  /**
+   * Mirrors ACP `config_option_update`. Carries the FULL snapshot of
+   * configuration options (not a per-option delta) per SDK schema.
+   */
+  | {
+      type: "config_option_update";
+      configOptions: SessionConfigOption[];
       _meta?: AcpEventMeta;
     }
   /**
