@@ -1647,6 +1647,7 @@ export class AcpClient {
       const decision = await this.options.onPermissionRequest(
         {
           sessionId: params.sessionId,
+          acpxRecordId: this.options.acpxRecordId ?? params.sessionId,
           raw: params,
           inferredKind: inferToolKind(params),
         },

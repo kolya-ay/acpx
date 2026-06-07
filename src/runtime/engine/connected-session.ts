@@ -99,6 +99,7 @@ export async function withConnectedSession<T>(
     options.createClient?.({
       agentCommand: record.agentCommand,
       cwd: absolutePath(record.cwd),
+      acpxRecordId: record.acpxRecordId,
       mcpServers: options.mcpServers,
       permissionMode: options.permissionMode ?? "approve-reads",
       nonInteractivePermissions: options.nonInteractivePermissions,
@@ -112,6 +113,7 @@ export async function withConnectedSession<T>(
     new AcpClient({
       agentCommand: record.agentCommand,
       cwd: absolutePath(record.cwd),
+      acpxRecordId: record.acpxRecordId,
       mcpServers: options.mcpServers,
       permissionMode: options.permissionMode ?? "approve-reads",
       nonInteractivePermissions: options.nonInteractivePermissions,
