@@ -1,4 +1,9 @@
-import type { ToolCallContent, ToolCallLocation, ToolKind } from "@agentclientprotocol/sdk";
+import type {
+  AvailableCommand,
+  ToolCallContent,
+  ToolCallLocation,
+  ToolKind,
+} from "@agentclientprotocol/sdk";
 import type {
   AcpPermissionDecision,
   AcpPermissionRequest,
@@ -12,6 +17,19 @@ import type { SessionAgentOptions } from "../engine/session-options.js";
 export type { SessionAgentOptions, SystemPromptOption } from "../engine/session-options.js";
 
 export type { AcpPermissionDecision, AcpPermissionRequest } from "../../types.js";
+
+/**
+ * SDK shapes re-exported from `acpx/runtime` so embedders can type acpx's
+ * public surface without reaching into `@agentclientprotocol/sdk` directly.
+ */
+export type { AvailableCommand } from "@agentclientprotocol/sdk";
+
+/**
+ * `_meta` envelope carried on top-level event variants. Mirrors the ACP SDK
+ * shape (`{ [key: string]: unknown } | null`). `null` is meaningful — it is
+ * the explicit "no metadata" signal from the agent.
+ */
+export type AcpEventMeta = { [key: string]: unknown } | null;
 
 export type AcpRuntimePromptMode = "prompt" | "steer";
 
@@ -113,19 +131,6 @@ export type AcpRuntimeUsageBreakdown = {
 };
 
 /**
- * Agent-advertised slash command. The runtime only surfaces enough to
- * drive a picker UI ("does the agent advertise /compact?"). The full
- * `AvailableCommandInput` schema from ACP is intentionally not plumbed
- * through.
- */
-export type AcpRuntimeAvailableCommand = {
-  name: string;
-  description?: string;
-  /** True/false when ACP advertised whether this command has an input schema. */
-  hasInput?: boolean;
-};
-
-/**
  * Session-level usage roll-up surfaced through `getStatus()`. The
  * reducer persists the breakdowns onto the session record; this type
  * exposes them on the runtime contract.
@@ -148,11 +153,11 @@ export type AcpRuntimeStatus = {
   usage?: AcpRuntimeSessionUsage;
   /**
    * Commands the agent advertised via `available_commands_update`.
-   * Sourced from the persisted record — older session files only
-   * preserve `name`, so `description` and `hasInput` may be undefined
-   * even when a more recent live event would have carried both.
+   * Sourced from the persisted record — older session files may
+   * only carry `name`, and entries lacking `description` (required
+   * by the SDK shape) are dropped on load.
    */
-  availableCommands?: AcpRuntimeAvailableCommand[];
+  availableCommands?: AvailableCommand[];
   details?: Record<string, unknown>;
 };
 
@@ -185,13 +190,6 @@ export type AcpRuntimeEvent =
        * every adapter does).
        */
       breakdown?: AcpRuntimeUsageBreakdown;
-      /**
-       * Populated on `available_commands_update` events. The list is a
-       * normalized view of the wire payload — names, descriptions, and
-       * a `hasInput` flag derived from whether the agent advertised a
-       * non-null `input` schema.
-       */
-      availableCommands?: AcpRuntimeAvailableCommand[];
     }
   | {
       type: "tool_call";
@@ -205,6 +203,15 @@ export type AcpRuntimeEvent =
       rawInput?: unknown;
       rawOutput?: unknown;
       content?: ToolCallContent[];
+    }
+  /**
+   * Mirrors ACP `available_commands_update`. Carries the FULL snapshot of
+   * commands the agent advertises this turn (not an incremental delta).
+   */
+  | {
+      type: "available_commands_update";
+      availableCommands: AvailableCommand[];
+      _meta?: AcpEventMeta;
     }
   /**
    * Compatibility terminal event emitted by runTurn(...). startTurn(...).events

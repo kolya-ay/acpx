@@ -225,27 +225,6 @@ test("parsePromptEventLine handles runtime status-style updates", () => {
   assert.deepEqual(
     parsePromptEventLine(
       JSON.stringify({
-        sessionUpdate: "available_commands_update",
-        availableCommands: [
-          { name: "/compact", description: "Compact context" },
-          { name: "/clear" },
-        ],
-      }),
-    ),
-    {
-      type: "status",
-      text: "available commands updated (2)",
-      tag: "available_commands_update",
-      availableCommands: [
-        { name: "/compact", description: "Compact context", hasInput: false },
-        { name: "/clear", hasInput: false },
-      ],
-    },
-  );
-
-  assert.deepEqual(
-    parsePromptEventLine(
-      JSON.stringify({
         sessionUpdate: "current_mode_update",
         currentModeId: "architect",
       }),
@@ -443,9 +422,7 @@ test("parsePromptEventLine covers status and tool summary fallbacks", () => {
   assert.deepEqual(
     parsePromptEventLine(JSON.stringify({ sessionUpdate: "available_commands_update" })),
     {
-      type: "status",
-      text: "available commands updated",
-      tag: "available_commands_update",
+      type: "available_commands_update",
       availableCommands: [],
     },
   );
@@ -676,48 +653,43 @@ test("parsePromptEventLine surfaces cost and _meta.usage breakdown on usage_upda
   );
 });
 
-test("parsePromptEventLine surfaces full availableCommands list with hasInput flag", () => {
+test("parsePromptEventLine emits available_commands_update as a top-level event with SDK AvailableCommand shape", () => {
   assert.deepEqual(
     parsePromptEventLine(
       JSON.stringify({
         sessionUpdate: "available_commands_update",
         availableCommands: [
-          {
-            name: "/compact",
-            description: "Compact the conversation",
-            // No input → hasInput should be false.
-          },
-          {
-            name: "/search",
-            description: "Search the workspace",
-            input: { hint: "query" },
-          },
-          {
-            // Missing name → dropped.
-            description: "no name",
-          },
-          // Bare string entry — non-spec but should not crash.
-          "/clear",
-          {
-            name: "  ", // whitespace-only name → dropped.
-            description: "blank",
-          },
-          {
-            name: "/cost",
-            // No description, no input.
-          },
+          { name: "/compact", description: "Compact context" },
+          { name: "/search", description: "Search", input: { hint: "query" } },
+          { name: "/clear", description: "Clear context" },
+          { name: "/no-desc" }, // missing required `description` — must be dropped
         ],
       }),
     ),
     {
-      type: "status",
-      text: "available commands updated (3)",
-      tag: "available_commands_update",
+      type: "available_commands_update",
       availableCommands: [
-        { name: "/compact", description: "Compact the conversation", hasInput: false },
-        { name: "/search", description: "Search the workspace", hasInput: true },
-        { name: "/cost", hasInput: false },
+        { name: "/compact", description: "Compact context" },
+        { name: "/search", description: "Search", input: { hint: "query" } },
+        { name: "/clear", description: "Clear context" },
       ],
+    },
+  );
+});
+
+test("parsePromptEventLine available_commands_update forwards _meta when present", () => {
+  assert.deepEqual(
+    parsePromptEventLine(
+      JSON.stringify({
+        sessionUpdate: "available_commands_update",
+        availableCommands: [{ name: "/compact", description: "Compact context" }],
+        _meta: { source: "agent" },
+      }),
+    ),
+    {
+      type: "available_commands_update",
+      availableCommands: [{ name: "/compact", description: "Compact context" }],
+      _meta: { source: "agent" },
     },
   );
 });

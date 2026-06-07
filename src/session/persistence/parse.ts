@@ -1,3 +1,4 @@
+import { validateAvailableCommand } from "../../runtime/public/sdk-validators.js";
 import type {
   SessionAcpxState,
   SessionEventLog,
@@ -40,48 +41,16 @@ function parseConfigOptions(raw: unknown): SessionAcpxState["config_options"] | 
   return raw as SessionAcpxState["config_options"];
 }
 
-function parseAvailableCommand(
-  raw: unknown,
-): NonNullable<SessionAcpxState["available_commands"]>[number] | undefined {
-  if (typeof raw === "string") {
-    const name = raw.trim();
-    return name ? { name } : undefined;
-  }
-  const record = asRecord(raw);
-  if (!record) {
-    return undefined;
-  }
-  const name = parseNonEmptyString(record.name);
-  if (!name) {
-    return undefined;
-  }
-  const description = parseNonEmptyString(record.description);
-  return {
-    name,
-    ...(description ? { description } : {}),
-    ...(typeof record.has_input === "boolean" ? { has_input: record.has_input } : {}),
-  };
-}
+type PersistedAvailableCommand = NonNullable<SessionAcpxState["available_commands"]>[number];
 
 function parseAvailableCommands(raw: unknown): SessionAcpxState["available_commands"] | undefined {
   if (!Array.isArray(raw)) {
     return undefined;
   }
   const commands = raw
-    .map((entry) => parseAvailableCommand(entry))
-    .filter(
-      (entry): entry is NonNullable<SessionAcpxState["available_commands"]>[number] =>
-        entry !== undefined,
-    );
+    .map((entry) => validateAvailableCommand(entry))
+    .filter((entry): entry is PersistedAvailableCommand => entry !== undefined);
   return commands.length > 0 ? commands : undefined;
-}
-
-function parseNonEmptyString(value: unknown): string | undefined {
-  if (typeof value !== "string") {
-    return undefined;
-  }
-  const trimmed = value.trim();
-  return trimmed ? trimmed : undefined;
 }
 
 function parseTokenUsage(

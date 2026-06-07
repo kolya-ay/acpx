@@ -3212,9 +3212,9 @@ test("AcpRuntimeManager getStatus surfaces token usage breakdowns and available 
   );
   record.acpx = {
     available_commands: [
-      { name: "/compact", description: "Compact context", has_input: false },
-      { name: "/clear", has_input: false },
-      { name: "/cost", description: "Show cost", has_input: true },
+      { name: "/compact", description: "Compact context" },
+      { name: "/clear", description: "Clear context" },
+      { name: "/cost", description: "Show cost" },
     ],
   };
 
@@ -3245,9 +3245,9 @@ test("AcpRuntimeManager getStatus surfaces token usage breakdowns and available 
   });
 
   assert.deepEqual(status.availableCommands, [
-    { name: "/compact", description: "Compact context", hasInput: false },
-    { name: "/clear", hasInput: false },
-    { name: "/cost", description: "Show cost", hasInput: true },
+    { name: "/compact", description: "Compact context" },
+    { name: "/clear", description: "Clear context" },
+    { name: "/cost", description: "Show cost" },
   ]);
 });
 
@@ -3267,25 +3267,4 @@ test("AcpRuntimeManager getStatus omits usage and availableCommands when the rec
 
   assert.equal(status.usage, undefined);
   assert.equal(status.availableCommands, undefined);
-});
-
-test("AcpRuntimeManager getStatus accepts legacy available command names", async () => {
-  const record = makeSessionRecord({
-    acpxRecordId: "legacy-commands:1",
-    acpSessionId: "legacy-commands-sid",
-    agentCommand: "codex --acp",
-    cwd: "/workspace",
-  });
-  record.acpx = {
-    available_commands: ["/compact", "/clear"] as never,
-  };
-
-  const store = new InMemorySessionStore([record]);
-  const manager = new AcpRuntimeManager(
-    createRuntimeOptions({ cwd: "/workspace", sessionStore: store }),
-  );
-
-  const status = await manager.getStatus(createHandle("legacy-commands:1"));
-
-  assert.deepEqual(status.availableCommands, [{ name: "/compact" }, { name: "/clear" }]);
 });

@@ -79,7 +79,7 @@ function makeRecord(): SessionRecord {
     },
     acpx: {
       current_mode_id: "code",
-      available_commands: [{ name: "run", description: "Run command", has_input: true }],
+      available_commands: [{ name: "run", description: "Run command", input: { hint: "args" } }],
     },
   };
 }

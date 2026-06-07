@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import path from "node:path";
+import type { AvailableCommand } from "@agentclientprotocol/sdk";
 import { AcpClient } from "../../acp/client.js";
 import { normalizeOutputError } from "../../acp/error-normalization.js";
 import { extractAcpError, isAcpResourceNotFoundError } from "../../acp/error-shapes.js";
@@ -41,7 +42,6 @@ import type {
   SessionTokenUsage,
 } from "../../types.js";
 import type {
-  AcpRuntimeAvailableCommand,
   AcpRuntimeEvent,
   AcpRuntimeHandle,
   AcpRuntimeOptions,
@@ -345,57 +345,13 @@ function buildUsageField(record: SessionRecord): { usage?: AcpRuntimeSessionUsag
 }
 
 function buildAvailableCommandsField(record: SessionRecord): {
-  availableCommands?: AcpRuntimeAvailableCommand[];
+  availableCommands?: AvailableCommand[];
 } {
-  const commands = record.acpx?.available_commands as readonly unknown[] | undefined;
+  const commands = record.acpx?.available_commands;
   if (!commands || commands.length === 0) {
     return {};
   }
-  const availableCommands = commands
-    .map((command) => runtimeAvailableCommand(command))
-    .filter((command): command is AcpRuntimeAvailableCommand => command !== undefined);
-  return availableCommands.length > 0 ? { availableCommands } : {};
-}
-
-function runtimeAvailableCommand(command: unknown): AcpRuntimeAvailableCommand | undefined {
-  if (typeof command === "string") {
-    const name = command.trim();
-    return name ? { name } : undefined;
-  }
-  const record = commandRecord(command);
-  if (!record) {
-    return undefined;
-  }
-  const name = trimmedField(record.name);
-  if (!name) {
-    return undefined;
-  }
-  const runtimeCommand: AcpRuntimeAvailableCommand = { name };
-  const description = trimmedField(record.description);
-  if (description) {
-    runtimeCommand.description = description;
-  }
-  if (typeof record.has_input === "boolean") {
-    runtimeCommand.hasInput = record.has_input;
-  }
-  return runtimeCommand;
-}
-
-function commandRecord(
-  value: unknown,
-): { name?: unknown; description?: unknown; has_input?: unknown } | undefined {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return undefined;
-  }
-  return value as { name?: unknown; description?: unknown; has_input?: unknown };
-}
-
-function trimmedField(value: unknown): string | undefined {
-  if (typeof value !== "string") {
-    return undefined;
-  }
-  const trimmed = value.trim();
-  return trimmed ? trimmed : undefined;
+  return { availableCommands: commands };
 }
 
 function advertisedConfigOptionIds(record: SessionRecord): Set<string> | undefined {

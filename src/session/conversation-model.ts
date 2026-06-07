@@ -13,7 +13,6 @@ import type {
   PromptInput,
   SessionAcpxState,
   SessionConversation,
-  SessionAvailableCommand,
   SessionAgentContent,
   SessionAgentMessage,
   SessionMessage,
@@ -64,23 +63,6 @@ function trimmedString(value: unknown): string | undefined {
   }
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : undefined;
-}
-
-function normalizeAvailableCommand(value: unknown): SessionAvailableCommand | undefined {
-  const record = asRecord(value);
-  if (!record) {
-    return undefined;
-  }
-  const name = trimmedString(record.name);
-  if (!name) {
-    return undefined;
-  }
-  const description = trimmedString(record.description);
-  return {
-    name,
-    ...(description ? { description } : {}),
-    has_input: record.input != null,
-  };
 }
 
 function extractText(content: ContentBlock): string | undefined {
@@ -777,9 +759,7 @@ const SESSION_UPDATE_HANDLERS: Record<string, SessionUpdateHandler> = {
   },
   available_commands_update: (_conversation, acpx, update) => {
     if (update.sessionUpdate === "available_commands_update") {
-      acpx.available_commands = update.availableCommands
-        .map((entry) => normalizeAvailableCommand(entry))
-        .filter((entry): entry is SessionAvailableCommand => entry !== undefined);
+      acpx.available_commands = update.availableCommands;
     }
   },
   current_mode_update: (_conversation, acpx, update) => {
