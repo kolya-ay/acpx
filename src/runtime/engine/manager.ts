@@ -1,12 +1,12 @@
 import { randomUUID } from "node:crypto";
 import path from "node:path";
-import type { AvailableCommand } from "@agentclientprotocol/sdk";
+import type { AvailableCommand, ContentBlock } from "@agentclientprotocol/sdk";
 import { AcpClient } from "../../acp/client.js";
 import { normalizeOutputError } from "../../acp/error-normalization.js";
 import { extractAcpError, isAcpResourceNotFoundError } from "../../acp/error-shapes.js";
 import { modelStateFromConfigOptions } from "../../acp/model-support.js";
 import { withTimeout } from "../../async-control.js";
-import { textPrompt, type PromptInput } from "../../prompt-content.js";
+import type { PromptInput } from "../../prompt-content.js";
 import {
   applyConfigOptionsToRecord,
   applyConfigOptionsToState,
@@ -49,7 +49,6 @@ import type {
   AcpRuntimeSessionModels,
   AcpRuntimeSessionUsage,
   AcpRuntimeStatus,
-  AcpRuntimeTurnAttachment,
   AcpRuntimeTurn,
   AcpRuntimeTurnResult,
   AcpRuntimeUsageBreakdown,
@@ -180,42 +179,6 @@ function isUnsupportedSessionCloseError(error: unknown): boolean {
   }
   const details = (acp.data as { details?: unknown }).details;
   return typeof details === "string" && details.toLowerCase().includes("invalid params");
-}
-
-function toPromptInput(
-  text: string,
-  attachments?: AcpRuntimeTurnAttachment[],
-): PromptInput | string {
-  if (!attachments || attachments.length === 0) {
-    return text;
-  }
-  const blocks: PromptInput = [];
-  if (text) {
-    blocks.push({ type: "text", text });
-  }
-  for (const attachment of attachments) {
-    if (attachment.mediaType.startsWith("image/")) {
-      blocks.push({
-        type: "image",
-        mimeType: attachment.mediaType,
-        data: attachment.data,
-      });
-      continue;
-    }
-    if (attachment.mediaType.startsWith("audio/")) {
-      blocks.push({
-        type: "audio",
-        mimeType: attachment.mediaType,
-        data: attachment.data,
-      });
-      continue;
-    }
-    throw new AcpRuntimeError(
-      "ACP_TURN_FAILED",
-      `Unsupported ACP runtime attachment media type: ${attachment.mediaType}`,
-    );
-  }
-  return blocks.length > 0 ? blocks : textPrompt(text);
 }
 
 function createInitialRecord(params: {
@@ -406,15 +369,14 @@ type RuntimeTurnTaskState = {
 type RuntimeTurnTask = {
   input: {
     handle: AcpRuntimeHandle;
-    text: string;
-    attachments?: AcpRuntimeTurnAttachment[];
+    content: ContentBlock[];
     mode: AcpRuntimePromptMode;
     sessionMode: "persistent" | "oneshot";
     requestId: string;
     timeoutMs?: number;
     signal?: AbortSignal;
   };
-  promptInput: PromptInput | string;
+  promptInput: PromptInput;
   queue: AsyncEventQueue;
   sessionReady: Deferred<void>;
   state: RuntimeTurnTaskState;
@@ -759,15 +721,14 @@ export class AcpRuntimeManager {
 
   startTurn(input: {
     handle: AcpRuntimeHandle;
-    text: string;
-    attachments?: AcpRuntimeTurnAttachment[];
+    content: ContentBlock[];
     mode: AcpRuntimePromptMode;
     sessionMode: "persistent" | "oneshot";
     requestId: string;
     timeoutMs?: number;
     signal?: AbortSignal;
   }): AcpRuntimeTurn {
-    const promptInput = toPromptInput(input.text, input.attachments);
+    const promptInput: PromptInput = input.content;
     const queue = new AsyncEventQueue();
     const result = createDeferred<AcpRuntimeTurnResult>();
     const sessionReady = createDeferred<void>();
@@ -1233,8 +1194,7 @@ export class AcpRuntimeManager {
 
   async *runTurn(input: {
     handle: AcpRuntimeHandle;
-    text: string;
-    attachments?: AcpRuntimeTurnAttachment[];
+    content: ContentBlock[];
     mode: AcpRuntimePromptMode;
     sessionMode: "persistent" | "oneshot";
     requestId: string;

@@ -55,7 +55,6 @@ export type {
   AcpRuntimeSessionUsage,
   AcpRuntimeStatus,
   AcpRuntimeTurn,
-  AcpRuntimeTurnAttachment,
   AcpRuntimeTurnInput,
   AcpRuntimeTurnResult,
   AcpRuntimeTurnResultError,
@@ -65,6 +64,7 @@ export type {
   AcpSessionStore,
   AcpSessionUpdateTag,
   AvailableCommand,
+  ContentBlock,
   PlanEntry,
   SessionAgentOptions,
   SessionConfigOption,
@@ -182,8 +182,7 @@ export class AcpxRuntime implements AcpxRuntimeLike {
     const turnPromise = managerPromise.then((manager) =>
       manager.startTurn({
         handle,
-        text: input.text,
-        attachments: input.attachments,
+        content: input.content,
         mode: input.mode,
         sessionMode: state.mode,
         requestId: input.requestId,
@@ -216,8 +215,7 @@ export class AcpxRuntime implements AcpxRuntimeLike {
     const manager = await this.getManager();
     yield* manager.runTurn({
       handle,
-      text: input.text,
-      attachments: input.attachments,
+      content: input.content,
       mode: input.mode,
       sessionMode: state.mode,
       requestId: input.requestId,
