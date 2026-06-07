@@ -225,35 +225,6 @@ test("parsePromptEventLine handles runtime status-style updates", () => {
   assert.deepEqual(
     parsePromptEventLine(
       JSON.stringify({
-        sessionUpdate: "current_mode_update",
-        currentModeId: "architect",
-      }),
-    ),
-    {
-      type: "status",
-      text: "mode updated: architect",
-      tag: "current_mode_update",
-    },
-  );
-
-  assert.deepEqual(
-    parsePromptEventLine(
-      JSON.stringify({
-        sessionUpdate: "config_option_update",
-        id: "approval",
-        currentValue: "manual",
-      }),
-    ),
-    {
-      type: "status",
-      text: "config updated: approval=manual",
-      tag: "config_option_update",
-    },
-  );
-
-  assert.deepEqual(
-    parsePromptEventLine(
-      JSON.stringify({
         sessionUpdate: "session_info_update",
         summary: "ready",
       }),
@@ -427,27 +398,10 @@ test("parsePromptEventLine covers status and tool summary fallbacks", () => {
     },
   );
   assert.deepEqual(
-    parsePromptEventLine(JSON.stringify({ sessionUpdate: "current_mode_update", modeId: "fast" })),
-    {
-      type: "status",
-      text: "mode updated: fast",
-      tag: "current_mode_update",
-    },
-  );
-  assert.deepEqual(
-    parsePromptEventLine(JSON.stringify({ sessionUpdate: "config_option_update", id: "mode" })),
-    {
-      type: "status",
-      text: "config updated: mode",
-      tag: "config_option_update",
-    },
-  );
-  assert.deepEqual(
     parsePromptEventLine(JSON.stringify({ sessionUpdate: "config_option_update" })),
     {
-      type: "status",
-      text: "config updated",
-      tag: "config_option_update",
+      type: "config_option_update",
+      configOptions: [],
     },
   );
   assert.deepEqual(
@@ -690,6 +644,129 @@ test("parsePromptEventLine available_commands_update forwards _meta when present
       type: "available_commands_update",
       availableCommands: [{ name: "/compact", description: "Compact context" }],
       _meta: { source: "agent" },
+    },
+  );
+});
+
+test("parsePromptEventLine emits current_mode_update as a top-level event", () => {
+  assert.deepEqual(
+    parsePromptEventLine(
+      JSON.stringify({
+        sessionUpdate: "current_mode_update",
+        currentModeId: "code",
+      }),
+    ),
+    {
+      type: "current_mode_update",
+      currentModeId: "code",
+    },
+  );
+});
+
+test("parsePromptEventLine current_mode_update forwards _meta when present", () => {
+  assert.deepEqual(
+    parsePromptEventLine(
+      JSON.stringify({
+        sessionUpdate: "current_mode_update",
+        currentModeId: "architect",
+        _meta: { reason: "user-set" },
+      }),
+    ),
+    {
+      type: "current_mode_update",
+      currentModeId: "architect",
+      _meta: { reason: "user-set" },
+    },
+  );
+});
+
+test("parsePromptEventLine current_mode_update returns null when currentModeId is missing or empty", () => {
+  assert.equal(
+    parsePromptEventLine(JSON.stringify({ sessionUpdate: "current_mode_update" })),
+    null,
+  );
+  assert.equal(
+    parsePromptEventLine(
+      JSON.stringify({ sessionUpdate: "current_mode_update", currentModeId: "   " }),
+    ),
+    null,
+  );
+});
+
+test("parsePromptEventLine emits config_option_update as a top-level event with SDK shape", () => {
+  assert.deepEqual(
+    parsePromptEventLine(
+      JSON.stringify({
+        sessionUpdate: "config_option_update",
+        configOptions: [
+          {
+            id: "approval_policy",
+            name: "Approval Policy",
+            type: "boolean",
+            currentValue: true,
+          },
+          {
+            id: "reasoning_effort",
+            name: "Reasoning Effort",
+            category: "mode",
+            type: "select",
+            options: [
+              { name: "Low", value: "low" },
+              { name: "High", value: "high" },
+            ],
+            currentValue: "high",
+          },
+        ],
+      }),
+    ),
+    {
+      type: "config_option_update",
+      configOptions: [
+        {
+          id: "approval_policy",
+          name: "Approval Policy",
+          type: "boolean",
+          currentValue: true,
+        },
+        {
+          id: "reasoning_effort",
+          name: "Reasoning Effort",
+          category: "mode",
+          type: "select",
+          options: [
+            { name: "Low", value: "low" },
+            { name: "High", value: "high" },
+          ],
+          currentValue: "high",
+        },
+      ],
+    },
+  );
+});
+
+test("parsePromptEventLine config_option_update forwards _meta when present", () => {
+  assert.deepEqual(
+    parsePromptEventLine(
+      JSON.stringify({
+        sessionUpdate: "config_option_update",
+        configOptions: [],
+        _meta: { source: "agent" },
+      }),
+    ),
+    {
+      type: "config_option_update",
+      configOptions: [],
+      _meta: { source: "agent" },
+    },
+  );
+});
+
+test("parsePromptEventLine config_option_update returns empty configOptions when array is missing", () => {
+  assert.deepEqual(
+    parsePromptEventLine(JSON.stringify({ sessionUpdate: "config_option_update" })),
+    {
+      type: "config_option_update",
+      configOptions: [],
     },
   );
 });

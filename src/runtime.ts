@@ -66,6 +66,8 @@ export type {
   AcpSessionUpdateTag,
   AvailableCommand,
   SessionAgentOptions,
+  SessionConfigOption,
+  SessionModeId,
   SystemPromptOption,
 } from "./runtime/public/contract.js";
 
