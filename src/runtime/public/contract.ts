@@ -25,6 +25,9 @@ export type { AcpPermissionDecision, AcpPermissionRequest } from "../../types.js
 /**
  * SDK shapes re-exported from `acpx/runtime` so embedders can type acpx's
  * public surface without reaching into `@agentclientprotocol/sdk` directly.
+ * Covers the event-payload shapes consumed by the top-level event variants
+ * (`AvailableCommand`, `PlanEntry`, `SessionConfigOption`, `SessionModeId`,
+ * `ContentBlock`, `SessionInfoUpdate`).
  */
 export type {
   AvailableCommand,
@@ -158,6 +161,15 @@ export type AcpRuntimeStatus = {
   acpxRecordId?: string;
   backendSessionId?: string;
   agentSessionId?: string;
+  /**
+   * Advertised model state. `availableModelIds` is the flat list of model
+   * IDs the agent advertised. When the agent advertises a `model` config
+   * option (category `"model"`, type `"select"`), IDs are sourced from
+   * that option's select values; otherwise the runtime falls back to bare
+   * IDs from the persisted `available_models` snapshot. Richer per-model
+   * metadata (name, description) is preserved on the `config_option_update`
+   * event and `SessionAcpxState.config_options` for consumers that want it.
+   */
   models?: AcpRuntimeSessionModels;
   /** Token usage and cost from the persisted session record. */
   usage?: AcpRuntimeSessionUsage;

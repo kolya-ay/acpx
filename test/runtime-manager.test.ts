@@ -3119,6 +3119,102 @@ test("AcpRuntimeManager getStatus.models survives a save/reload cycle", async ()
   assert.deepEqual(afterStatus.models, beforeStatus.models);
 });
 
+test("AcpRuntimeManager getStatus sources availableModelIds from the model config option when present", async () => {
+  const store = new InMemorySessionStore([
+    makeSessionRecord({
+      acpxRecordId: "model-config-options",
+      acpSessionId: "sid",
+      agentCommand: "fake",
+      cwd: "/tmp",
+      acpx: {
+        current_model_id: "sonnet",
+        available_models: ["sonnet", "opus"],
+        config_options: [
+          {
+            id: "model",
+            name: "Model",
+            category: "model",
+            type: "select",
+            currentValue: "sonnet",
+            options: [
+              { value: "sonnet", name: "Claude Sonnet", description: "Fast and capable" },
+              { value: "opus", name: "Claude Opus" },
+            ],
+          },
+        ],
+      },
+    }),
+  ]);
+  const manager = new AcpRuntimeManager(createRuntimeOptions({ cwd: "/tmp", sessionStore: store }));
+
+  const status = await manager.getStatus(createHandle("model-config-options"));
+  assert.deepEqual(status.models, {
+    currentModelId: "sonnet",
+    availableModelIds: ["sonnet", "opus"],
+  });
+});
+
+test("AcpRuntimeManager getStatus falls back to bare model IDs when no model config option exists", async () => {
+  const store = new InMemorySessionStore([
+    makeSessionRecord({
+      acpxRecordId: "model-bare-ids",
+      acpSessionId: "sid",
+      agentCommand: "fake",
+      cwd: "/tmp",
+      acpx: {
+        current_model_id: "gpt-5",
+        available_models: ["gpt-5", "gpt-5-mini"],
+      },
+    }),
+  ]);
+  const manager = new AcpRuntimeManager(createRuntimeOptions({ cwd: "/tmp", sessionStore: store }));
+
+  const status = await manager.getStatus(createHandle("model-bare-ids"));
+  assert.deepEqual(status.models, {
+    currentModelId: "gpt-5",
+    availableModelIds: ["gpt-5", "gpt-5-mini"],
+  });
+});
+
+test("AcpRuntimeManager getStatus surfaces availableModelIds without currentModelId when current_model_id is unset", async () => {
+  const store = new InMemorySessionStore([
+    makeSessionRecord({
+      acpxRecordId: "model-no-current",
+      acpSessionId: "sid",
+      agentCommand: "fake",
+      cwd: "/tmp",
+      acpx: {
+        available_models: ["a", "b"],
+      },
+    }),
+  ]);
+  const manager = new AcpRuntimeManager(createRuntimeOptions({ cwd: "/tmp", sessionStore: store }));
+
+  const status = await manager.getStatus(createHandle("model-no-current"));
+  assert.deepEqual(status.models, { availableModelIds: ["a", "b"] });
+});
+
+test("AcpRuntimeManager getStatus surfaces an empty availableModelIds when current_model_id is set but no models are advertised", async () => {
+  const store = new InMemorySessionStore([
+    makeSessionRecord({
+      acpxRecordId: "model-fallback",
+      acpSessionId: "sid",
+      agentCommand: "fake",
+      cwd: "/tmp",
+      acpx: {
+        current_model_id: "solo",
+      },
+    }),
+  ]);
+  const manager = new AcpRuntimeManager(createRuntimeOptions({ cwd: "/tmp", sessionStore: store }));
+
+  const status = await manager.getStatus(createHandle("model-fallback"));
+  assert.deepEqual(status.models, {
+    currentModelId: "solo",
+    availableModelIds: [],
+  });
+});
+
 test("AcpRuntimeManager forwards sessionOptions to createClient on fresh session", async () => {
   const store = new InMemorySessionStore();
   const factoryCalls: Array<Record<string, unknown>> = [];
