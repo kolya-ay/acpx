@@ -1,5 +1,6 @@
 import type {
   AvailableCommand,
+  ContentBlock,
   PlanEntry,
   SessionConfigOption,
   SessionModeId,
@@ -27,6 +28,7 @@ export type { AcpPermissionDecision, AcpPermissionRequest } from "../../types.js
  */
 export type {
   AvailableCommand,
+  ContentBlock,
   PlanEntry,
   SessionConfigOption,
   SessionInfoUpdate,
@@ -86,19 +88,18 @@ export type AcpRuntimeEnsureInput = {
   sessionOptions?: SessionAgentOptions;
 };
 
-export type AcpRuntimeTurnAttachment = {
-  /**
-   * Media type for binary prompt attachments. The runtime currently maps
-   * image/* and audio/* attachments to ACP prompt content blocks.
-   */
-  mediaType: string;
-  data: string;
-};
-
 export type AcpRuntimeTurnInput = {
   handle: AcpRuntimeHandle;
-  text: string;
-  attachments?: AcpRuntimeTurnAttachment[];
+  /**
+   * ACP prompt content blocks forwarded verbatim to `session/prompt`. Use
+   * the SDK `ContentBlock` shapes directly: `text`, `image`, `audio`,
+   * `resource_link`, or embedded `resource`. Embedded `resource` blocks
+   * carry @-mentioned file contents through to the agent; `resource_link`
+   * blocks carry references. Image/audio blocks must satisfy the agent's
+   * advertised `promptCapabilities`; unsupported content is rejected by
+   * the underlying ACP client.
+   */
+  content: ContentBlock[];
   mode: AcpRuntimePromptMode;
   requestId: string;
   timeoutMs?: number;

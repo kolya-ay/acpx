@@ -341,7 +341,7 @@ test("AcpRuntimeManager streams runtime events and saves updated status", async 
     }),
     prompt: async (sessionId, input) => {
       assert.equal(sessionId, "turn-sid");
-      assert.equal(input, "hello");
+      assert.deepEqual(input, [{ type: "text", text: "hello" }]);
       handlers.onSessionUpdate?.({
         sessionId: "turn-sid",
         update: {
@@ -376,7 +376,7 @@ test("AcpRuntimeManager streams runtime events and saves updated status", async 
 
   const turn = manager.startTurn({
     handle: createHandle("turn-session"),
-    text: "hello",
+    content: [{ type: "text", text: "hello" }],
     mode: "prompt",
     sessionMode: "persistent",
     requestId: "req-1",
@@ -463,7 +463,7 @@ test("AcpRuntimeManager persists prompt response usage and surfaces it in status
 
   const turn = manager.startTurn({
     handle: createHandle("response-usage-session"),
-    text: "hello",
+    content: [{ type: "text", text: "hello" }],
     mode: "prompt",
     sessionMode: "persistent",
     requestId: "req-response-usage",
@@ -562,7 +562,7 @@ test("AcpRuntimeManager restores persisted session env when reconnecting startTu
 
   const turn = manager.startTurn({
     handle: createHandle("turn-env-session"),
-    text: "hello",
+    content: [{ type: "text", text: "hello" }],
     mode: "prompt",
     sessionMode: "persistent",
     requestId: "req-env",
@@ -646,7 +646,7 @@ test("AcpRuntimeManager keeps reusable persistent clients pooled across turns an
   const firstEvents = await collectEvents(
     manager.runTurn({
       handle: createHandle("pooled-persistent-session"),
-      text: "first",
+      content: [{ type: "text", text: "first" }],
       mode: "prompt",
       sessionMode: "persistent",
       requestId: "req-pooled-1",
@@ -655,7 +655,7 @@ test("AcpRuntimeManager keeps reusable persistent clients pooled across turns an
   const secondEvents = await collectEvents(
     manager.runTurn({
       handle: createHandle("pooled-persistent-session"),
-      text: "second",
+      content: [{ type: "text", text: "second" }],
       mode: "prompt",
       sessionMode: "persistent",
       requestId: "req-pooled-2",
@@ -732,7 +732,7 @@ test("AcpRuntimeManager runTurn remains a compatibility adapter over startTurn",
   const events = await collectEvents(
     manager.runTurn({
       handle: createHandle("legacy-turn-session"),
-      text: "hello",
+      content: [{ type: "text", text: "hello" }],
       mode: "prompt",
       sessionMode: "persistent",
       requestId: "req-legacy",
@@ -811,7 +811,7 @@ test("AcpRuntimeManager retains a reusable persistent client across turns", asyn
   for (const requestId of ["req-pooled-1", "req-pooled-2"]) {
     const turn = manager.startTurn({
       handle,
-      text: "hello",
+      content: [{ type: "text", text: "hello" }],
       mode: "prompt",
       sessionMode: "persistent",
       requestId,
@@ -884,7 +884,7 @@ test("AcpRuntimeManager closeStream suppresses future live events while preservi
 
   const turn = manager.startTurn({
     handle: createHandle("stream-close-session"),
-    text: "hello",
+    content: [{ type: "text", text: "hello" }],
     mode: "prompt",
     sessionMode: "persistent",
     requestId: "req-close-stream",
@@ -986,7 +986,7 @@ test("AcpRuntimeManager does not pool a persistent client after active close", a
 
   const turn = manager.startTurn({
     handle,
-    text: "hello",
+    content: [{ type: "text", text: "hello" }],
     mode: "prompt",
     sessionMode: "persistent",
     requestId: "req-active-close",
@@ -1081,7 +1081,7 @@ test("AcpRuntimeManager live checkpoints preserve active close state", async () 
 
   const turn = manager.startTurn({
     handle,
-    text: "hello",
+    content: [{ type: "text", text: "hello" }],
     mode: "prompt",
     sessionMode: "persistent",
     requestId: "req-active-close-checkpoint",
@@ -1152,7 +1152,7 @@ test("AcpRuntimeManager accepts a session reply even when the prompt RPC times o
 
   const turn = manager.startTurn({
     handle: createHandle("late-reply-session"),
-    text: "hello",
+    content: [{ type: "text", text: "hello" }],
     mode: "prompt",
     sessionMode: "persistent",
     requestId: "req-late-reply",
@@ -1239,7 +1239,7 @@ test("AcpRuntimeManager waits for late reply chunks to settle before ending a sa
 
   const turn = manager.startTurn({
     handle: createHandle("late-reply-stream-session"),
-    text: "hello",
+    content: [{ type: "text", text: "hello" }],
     mode: "prompt",
     sessionMode: "persistent",
     requestId: "req-late-reply-stream",
@@ -1330,7 +1330,7 @@ test("AcpRuntimeManager routes controls through the active controller while a tu
 
   const turn = manager.startTurn({
     handle: createHandle("live-session"),
-    text: "hello",
+    content: [{ type: "text", text: "hello" }],
     mode: "prompt",
     sessionMode: "persistent",
     requestId: "req-live",
@@ -1671,7 +1671,7 @@ test("AcpRuntimeManager maps active generic thinking config against live adverti
   const handle = createHandle("active-thinking-alias-session");
   const turn = manager.startTurn({
     handle,
-    text: "hello",
+    content: [{ type: "text", text: "hello" }],
     mode: "prompt",
     sessionMode: "persistent",
     requestId: "req-active-thinking-alias",
@@ -1782,7 +1782,7 @@ test("AcpRuntimeManager waits for active load refresh before resolving generic c
   const handle = createHandle("loading-thinking-alias-session");
   const turn = manager.startTurn({
     handle,
-    text: "hello",
+    content: [{ type: "text", text: "hello" }],
     mode: "prompt",
     sessionMode: "persistent",
     requestId: "req-loading-thinking-alias",
@@ -1872,7 +1872,7 @@ test("AcpRuntimeManager waits for oneshot load fallback to resolve before sendin
 
   const turn = manager.startTurn({
     handle: createHandle("fallback-session"),
-    text: "hello",
+    content: [{ type: "text", text: "hello" }],
     mode: "prompt",
     sessionMode: "oneshot",
     requestId: "req-fallback",
@@ -1943,7 +1943,7 @@ test("AcpRuntimeManager honors aborts requested before prompt starts after onesh
 
   const turn = manager.startTurn({
     handle: createHandle("aborted-session"),
-    text: "hello",
+    content: [{ type: "text", text: "hello" }],
     mode: "prompt",
     sessionMode: "oneshot",
     requestId: "req-abort",
@@ -2338,7 +2338,7 @@ test("AcpRuntimeManager surfaces normalized prompt failures", async () => {
 
   const turn = manager.startTurn({
     handle: createHandle("error-session"),
-    text: "hello",
+    content: [{ type: "text", text: "hello" }],
     mode: "prompt",
     sessionMode: "persistent",
     requestId: "req-error",
@@ -2358,7 +2358,7 @@ test("AcpRuntimeManager surfaces normalized prompt failures", async () => {
   const legacyEvents = await collectEvents(
     manager.runTurn({
       handle: createHandle("error-session"),
-      text: "hello",
+      content: [{ type: "text", text: "hello" }],
       mode: "prompt",
       sessionMode: "persistent",
       requestId: "req-error-legacy",
@@ -2375,14 +2375,15 @@ test("AcpRuntimeManager surfaces normalized prompt failures", async () => {
   ]);
 });
 
-test("AcpRuntimeManager rejects unsupported runtime attachment media types", async () => {
+test("AcpRuntimeManager forwards text content blocks verbatim to session/prompt", async () => {
   const record = makeSessionRecord({
-    acpxRecordId: "attachment-session",
-    acpSessionId: "attachment-sid",
+    acpxRecordId: "text-content-session",
+    acpSessionId: "text-content-sid",
     agentCommand: "codex --acp",
     cwd: "/workspace",
   });
   const store = new InMemorySessionStore([record]);
+  let capturedPrompt: unknown;
   const manager = new AcpRuntimeManager(
     createRuntimeOptions({ cwd: "/workspace", sessionStore: store }),
     {
@@ -2397,7 +2398,10 @@ test("AcpRuntimeManager rejects unsupported runtime attachment media types", asy
           supportsResumeSession: () => false,
           loadSessionWithOptions: async () => ({ agentSessionId: "unused" }),
           getAgentLifecycleSnapshot: () => ({ running: true }),
-          prompt: async () => ({ stopReason: "end_turn" }),
+          prompt: async (_sessionId: string, input: unknown) => {
+            capturedPrompt = input;
+            return { stopReason: "end_turn" };
+          },
           requestCancelActivePrompt: async () => false,
           hasActivePrompt: () => false,
           setSessionMode: async () => {},
@@ -2408,21 +2412,200 @@ test("AcpRuntimeManager rejects unsupported runtime attachment media types", asy
     },
   );
 
-  assert.throws(
-    () =>
-      manager.startTurn({
-        handle: createHandle("attachment-session"),
-        text: "",
-        attachments: [{ mediaType: "application/pdf", data: "Zm9v" }],
-        mode: "prompt",
-        sessionMode: "persistent",
-        requestId: "req-attachment",
-      }),
-    /Unsupported ACP runtime attachment media type: application\/pdf/,
-  );
+  const turn = manager.startTurn({
+    handle: createHandle("text-content-session"),
+    content: [{ type: "text", text: "hi" }],
+    mode: "prompt",
+    sessionMode: "persistent",
+    requestId: "req-text-content",
+  });
+  const { result } = await collectTurn(turn);
+
+  assert.deepEqual(result, { status: "completed", stopReason: "end_turn" });
+  assert.deepEqual(capturedPrompt, [{ type: "text", text: "hi" }]);
 });
 
-test("AcpRuntimeManager maps audio attachments into ACP prompt blocks", async () => {
+test("AcpRuntimeManager forwards image content blocks verbatim to session/prompt", async () => {
+  const record = makeSessionRecord({
+    acpxRecordId: "image-content-session",
+    acpSessionId: "image-content-sid",
+    agentCommand: "codex --acp",
+    cwd: "/workspace",
+  });
+  const store = new InMemorySessionStore([record]);
+  let capturedPrompt: unknown;
+  const manager = new AcpRuntimeManager(
+    createRuntimeOptions({ cwd: "/workspace", sessionStore: store }),
+    {
+      clientFactory: () =>
+        ({
+          start: async () => {},
+          close: async () => {},
+          createSession: async () => ({ sessionId: "unused" }),
+          loadSession: async () => ({ agentSessionId: "unused" }),
+          hasReusableSession: () => true,
+          supportsLoadSession: () => true,
+          supportsResumeSession: () => false,
+          loadSessionWithOptions: async () => ({ agentSessionId: "unused" }),
+          getAgentLifecycleSnapshot: () => ({
+            running: true,
+          }),
+          prompt: async (_sessionId: string, input: unknown) => {
+            capturedPrompt = input;
+            return { stopReason: "end_turn" };
+          },
+          requestCancelActivePrompt: async () => false,
+          hasActivePrompt: () => false,
+          setSessionMode: async () => {},
+          setSessionConfigOption: async () => {},
+          clearEventHandlers: () => {},
+          setEventHandlers: () => {},
+        }) as never,
+    },
+  );
+
+  const content = [
+    { type: "text" as const, text: "describe" },
+    { type: "image" as const, mimeType: "image/png", data: "iVBORw0KGgo=" },
+  ];
+  const turn = manager.startTurn({
+    handle: createHandle("image-content-session"),
+    content,
+    mode: "prompt",
+    sessionMode: "persistent",
+    requestId: "req-image-content",
+  });
+  const { result } = await collectTurn(turn);
+
+  assert.deepEqual(result, { status: "completed", stopReason: "end_turn" });
+  assert.deepEqual(capturedPrompt, content);
+});
+
+test("AcpRuntimeManager forwards embedded resource content blocks verbatim to session/prompt", async () => {
+  const record = makeSessionRecord({
+    acpxRecordId: "resource-content-session",
+    acpSessionId: "resource-content-sid",
+    agentCommand: "codex --acp",
+    cwd: "/workspace",
+  });
+  const store = new InMemorySessionStore([record]);
+  let capturedPrompt: unknown;
+  const manager = new AcpRuntimeManager(
+    createRuntimeOptions({ cwd: "/workspace", sessionStore: store }),
+    {
+      clientFactory: () =>
+        ({
+          start: async () => {},
+          close: async () => {},
+          createSession: async () => ({ sessionId: "unused" }),
+          loadSession: async () => ({ agentSessionId: "unused" }),
+          hasReusableSession: () => true,
+          supportsLoadSession: () => true,
+          supportsResumeSession: () => false,
+          loadSessionWithOptions: async () => ({ agentSessionId: "unused" }),
+          getAgentLifecycleSnapshot: () => ({
+            running: true,
+          }),
+          prompt: async (_sessionId: string, input: unknown) => {
+            capturedPrompt = input;
+            return { stopReason: "end_turn" };
+          },
+          requestCancelActivePrompt: async () => false,
+          hasActivePrompt: () => false,
+          setSessionMode: async () => {},
+          setSessionConfigOption: async () => {},
+          clearEventHandlers: () => {},
+          setEventHandlers: () => {},
+        }) as never,
+    },
+  );
+
+  const content = [
+    { type: "text" as const, text: "summarize" },
+    {
+      type: "resource" as const,
+      resource: {
+        uri: "file:///workspace/notes.md",
+        mimeType: "text/markdown",
+        text: "# Notes\nhello",
+      },
+    },
+  ];
+  const turn = manager.startTurn({
+    handle: createHandle("resource-content-session"),
+    content,
+    mode: "prompt",
+    sessionMode: "persistent",
+    requestId: "req-resource-content",
+  });
+  const { result } = await collectTurn(turn);
+
+  assert.deepEqual(result, { status: "completed", stopReason: "end_turn" });
+  assert.deepEqual(capturedPrompt, content);
+});
+
+test("AcpRuntimeManager forwards resource_link content blocks verbatim to session/prompt", async () => {
+  const record = makeSessionRecord({
+    acpxRecordId: "resource-link-session",
+    acpSessionId: "resource-link-sid",
+    agentCommand: "codex --acp",
+    cwd: "/workspace",
+  });
+  const store = new InMemorySessionStore([record]);
+  let capturedPrompt: unknown;
+  const manager = new AcpRuntimeManager(
+    createRuntimeOptions({ cwd: "/workspace", sessionStore: store }),
+    {
+      clientFactory: () =>
+        ({
+          start: async () => {},
+          close: async () => {},
+          createSession: async () => ({ sessionId: "unused" }),
+          loadSession: async () => ({ agentSessionId: "unused" }),
+          hasReusableSession: () => true,
+          supportsLoadSession: () => true,
+          supportsResumeSession: () => false,
+          loadSessionWithOptions: async () => ({ agentSessionId: "unused" }),
+          getAgentLifecycleSnapshot: () => ({
+            running: true,
+          }),
+          prompt: async (_sessionId: string, input: unknown) => {
+            capturedPrompt = input;
+            return { stopReason: "end_turn" };
+          },
+          requestCancelActivePrompt: async () => false,
+          hasActivePrompt: () => false,
+          setSessionMode: async () => {},
+          setSessionConfigOption: async () => {},
+          clearEventHandlers: () => {},
+          setEventHandlers: () => {},
+        }) as never,
+    },
+  );
+
+  const content = [
+    { type: "text" as const, text: "review" },
+    {
+      type: "resource_link" as const,
+      uri: "file:///workspace/example.ts",
+      name: "example.ts",
+      mimeType: "text/x-typescript",
+    },
+  ];
+  const turn = manager.startTurn({
+    handle: createHandle("resource-link-session"),
+    content,
+    mode: "prompt",
+    sessionMode: "persistent",
+    requestId: "req-resource-link",
+  });
+  const { result } = await collectTurn(turn);
+
+  assert.deepEqual(result, { status: "completed", stopReason: "end_turn" });
+  assert.deepEqual(capturedPrompt, content);
+});
+
+test("AcpRuntimeManager forwards audio content blocks verbatim to session/prompt", async () => {
   const record = makeSessionRecord({
     acpxRecordId: "audio-attachment-session",
     acpSessionId: "audio-attachment-sid",
@@ -2461,8 +2644,10 @@ test("AcpRuntimeManager maps audio attachments into ACP prompt blocks", async ()
 
   const turn = manager.startTurn({
     handle: createHandle("audio-attachment-session"),
-    text: "transcribe",
-    attachments: [{ mediaType: "audio/wav", data: "UklGRg==" }],
+    content: [
+      { type: "text", text: "transcribe" },
+      { type: "audio", mimeType: "audio/wav", data: "UklGRg==" },
+    ],
     mode: "prompt",
     sessionMode: "persistent",
     requestId: "req-audio-attachment",
@@ -2519,7 +2704,7 @@ test("AcpRuntimeManager fails persistent turns clearly when session reuse is una
 
   const turn = manager.startTurn({
     handle: createHandle("persistent-session"),
-    text: "hello",
+    content: [{ type: "text", text: "hello" }],
     mode: "prompt",
     sessionMode: "persistent",
     requestId: "req-persistent",
@@ -2583,7 +2768,7 @@ test("AcpRuntimeManager still falls back to a fresh session for oneshot turns", 
 
   const turn = manager.startTurn({
     handle: createHandle("oneshot-session", "oneshot-session:oneshot:1"),
-    text: "hello",
+    content: [{ type: "text", text: "hello" }],
     mode: "prompt",
     sessionMode: "oneshot",
     requestId: "req-oneshot",
@@ -2674,7 +2859,7 @@ test("AcpRuntimeManager falls back when a kept-open persistent client is no long
 
   const turn = manager.startTurn({
     handle: createHandle("pending-persistent-session", record.acpxRecordId),
-    text: "hello",
+    content: [{ type: "text", text: "hello" }],
     mode: "prompt",
     sessionMode: "persistent",
     requestId: "req-pending-persistent-session",
@@ -2773,7 +2958,7 @@ test("AcpRuntimeManager reuses a kept-open persistent client for controls before
   const events = await collectEvents(
     manager.runTurn({
       handle,
-      text: "hello",
+      content: [{ type: "text", text: "hello" }],
       mode: "prompt",
       sessionMode: "persistent",
       requestId: "req-pending-control-session",
@@ -3313,7 +3498,7 @@ test("AcpRuntimeManager preserves current_plan across the prepareRuntimeTurn clo
 
   const turn = manager.startTurn({
     handle: createHandle("plan-roundtrip-session"),
-    text: "next step",
+    content: [{ type: "text", text: "next step" }],
     mode: "prompt",
     sessionMode: "persistent",
     requestId: "req-plan-roundtrip",

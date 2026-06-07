@@ -165,7 +165,7 @@ test("AcpxRuntime delegates session lifecycle to the runtime manager", async () 
 
   const turn = runtime.startTurn({
     handle,
-    text: "hello",
+    content: [{ type: "text", text: "hello" }],
     mode: "steer",
     requestId: "req-1",
     timeoutMs: 42,
@@ -185,7 +185,7 @@ test("AcpxRuntime delegates session lifecycle to the runtime manager", async () 
   const legacyEvents: AcpRuntimeEvent[] = [];
   for await (const event of runtime.runTurn({
     handle,
-    text: "legacy",
+    content: [{ type: "text", text: "legacy" }],
     mode: "prompt",
     requestId: "req-legacy",
   })) {
@@ -439,7 +439,7 @@ test("AcpxRuntime falls back to plain runtimeSessionName handles and reuses a si
 
   const turn = runtime.startTurn({
     handle: plainHandle,
-    text: "hello",
+    content: [{ type: "text", text: "hello" }],
     mode: "prompt",
     requestId: "req-plain",
   });
