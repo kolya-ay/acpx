@@ -75,6 +75,7 @@ function createQueueOwnerSharedClient(
   return new AcpClient({
     agentCommand: sessionRecord.agentCommand,
     cwd: absolutePath(sessionRecord.cwd),
+    acpxRecordId: sessionRecord.acpxRecordId,
     mcpServers: options.mcpServers,
     permissionMode: options.permissionMode,
     nonInteractivePermissions: options.nonInteractivePermissions,

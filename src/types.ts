@@ -19,6 +19,7 @@ import type { PromptInput } from "./prompt-content.js";
 
 export type AcpPermissionRequest = {
   sessionId: string;
+  acpxRecordId: string;
   raw: RequestPermissionRequest;
   inferredKind: ToolKind | undefined;
 };
@@ -201,6 +202,7 @@ export interface OutputFormatter {
 export type AcpClientOptions = {
   agentCommand: string;
   cwd: string;
+  acpxRecordId?: string;
   mcpServers?: McpServer[];
   permissionMode: PermissionMode;
   nonInteractivePermissions?: NonInteractivePermissionPolicy;

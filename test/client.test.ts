@@ -446,6 +446,41 @@ test("AcpClient onPermissionRequest decision short-circuits the mode-based resol
   });
 });
 
+test("AcpClient onPermissionRequest exposes acpxRecordId from constructor options", async () => {
+  let observedAcpxRecordId: string | undefined;
+  const client = makeClient({
+    permissionMode: "approve-all",
+    acpxRecordId: "01HXYZRECORDULID",
+    onPermissionRequest: async (req) => {
+      observedAcpxRecordId = req.acpxRecordId;
+      return { outcome: "allow_once" };
+    },
+  });
+
+  await asInternals(client).handlePermissionRequest?.(
+    makePermissionRequest("session-acpx-record", "edit"),
+  );
+
+  assert.equal(observedAcpxRecordId, "01HXYZRECORDULID");
+});
+
+test("AcpClient onPermissionRequest falls back acpxRecordId to wire sessionId when none configured", async () => {
+  let observedAcpxRecordId: string | undefined;
+  const client = makeClient({
+    permissionMode: "approve-all",
+    onPermissionRequest: async (req) => {
+      observedAcpxRecordId = req.acpxRecordId;
+      return { outcome: "allow_once" };
+    },
+  });
+
+  await asInternals(client).handlePermissionRequest?.(
+    makePermissionRequest("session-fallback-id", "edit"),
+  );
+
+  assert.equal(observedAcpxRecordId, "session-fallback-id");
+});
+
 test("AcpClient onPermissionRequest returning undefined falls through to mode-based resolver", async () => {
   let callbackInvocations = 0;
   const client = makeClient({

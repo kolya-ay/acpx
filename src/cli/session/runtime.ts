@@ -659,6 +659,7 @@ async function runSessionPrompt(options: RunSessionPromptOptions): Promise<Sessi
     new AcpClient({
       agentCommand: record.agentCommand,
       cwd: absolutePath(record.cwd),
+      acpxRecordId: record.acpxRecordId,
       mcpServers: options.mcpServers,
       permissionMode: options.permissionMode,
       nonInteractivePermissions: options.nonInteractivePermissions,

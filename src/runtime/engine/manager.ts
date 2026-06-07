@@ -880,6 +880,7 @@ export class AcpRuntimeManager {
     return this.createClient({
       agentCommand: record.agentCommand,
       cwd: record.cwd,
+      acpxRecordId: record.acpxRecordId,
       mcpServers: [...(this.options.mcpServers ?? [])],
       permissionMode: this.options.permissionMode,
       nonInteractivePermissions: this.options.nonInteractivePermissions,
@@ -1316,6 +1317,7 @@ export class AcpRuntimeManager {
       this.createClient({
         agentCommand: record.agentCommand,
         cwd: record.cwd,
+        acpxRecordId: record.acpxRecordId,
         mcpServers: [...(this.options.mcpServers ?? [])],
         permissionMode: this.options.permissionMode,
         nonInteractivePermissions: this.options.nonInteractivePermissions,
