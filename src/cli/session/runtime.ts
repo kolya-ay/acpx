@@ -23,6 +23,7 @@ import {
   sessionOptionsFromRecord,
   type SessionAgentOptions,
 } from "../../runtime/engine/session-options.js";
+import { asTrimmedString } from "../../runtime/public/shared.js";
 import {
   applyConfigOptionsToRecord,
   applyConfigOptionsToState,
@@ -158,10 +159,6 @@ function toPromptResult(
   };
 }
 
-function requestedModelId(value: string | undefined): string {
-  return typeof value === "string" ? value.trim() : "";
-}
-
 function applyConfigOptionResponseToState(
   state: SessionAcpxState | undefined,
   response:
@@ -236,7 +233,7 @@ async function applyPromptModelIfAdvertised(params: {
   timeoutMs?: number;
   suppressWarnings?: boolean;
 }): Promise<void> {
-  const requestedModel = requestedModelId(params.requestedModel);
+  const requestedModel = asTrimmedString(params.requestedModel);
   if (!requestedModel) {
     return;
   }

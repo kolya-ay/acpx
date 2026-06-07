@@ -1,6 +1,11 @@
 import { randomUUID } from "node:crypto";
 import path from "node:path";
-import type { AvailableCommand, ContentBlock } from "@agentclientprotocol/sdk";
+import type {
+  AvailableCommand,
+  ContentBlock,
+  SessionConfigOption,
+  SessionConfigSelectOption,
+} from "@agentclientprotocol/sdk";
 import { AcpClient } from "../../acp/client.js";
 import { normalizeOutputError } from "../../acp/error-normalization.js";
 import { extractAcpError, isAcpResourceNotFoundError } from "../../acp/error-shapes.js";
@@ -247,10 +252,58 @@ function statusSummary(record: SessionRecord): string {
   return parts.join(" ");
 }
 
+function isSessionConfigSelectOption(value: unknown): value is SessionConfigSelectOption {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    typeof (value as { value?: unknown }).value === "string"
+  );
+}
+
+function flattenSelectOptions(option: SessionConfigOption): SessionConfigSelectOption[] {
+  if (option.type !== "select") {
+    return [];
+  }
+  const flat: SessionConfigSelectOption[] = [];
+  for (const entry of option.options) {
+    if (isSessionConfigSelectOption(entry)) {
+      flat.push(entry);
+      continue;
+    }
+    const groupOptions = (entry as { options?: SessionConfigSelectOption[] }).options;
+    if (Array.isArray(groupOptions)) {
+      for (const groupOption of groupOptions) {
+        if (isSessionConfigSelectOption(groupOption)) {
+          flat.push(groupOption);
+        }
+      }
+    }
+  }
+  return flat;
+}
+
+function modelIdsFromConfigOptions(record: SessionRecord): string[] | undefined {
+  const options = record.acpx?.config_options;
+  if (!options) {
+    return undefined;
+  }
+  const modelOption = options.find(
+    (option) => option.category === "model" && option.type === "select",
+  );
+  if (!modelOption) {
+    return undefined;
+  }
+  const flatOptions = flattenSelectOptions(modelOption);
+  if (flatOptions.length === 0) {
+    return undefined;
+  }
+  return flatOptions.map((entry) => entry.value);
+}
+
 function buildModelsField(record: SessionRecord): { models?: AcpRuntimeSessionModels } {
-  const available = record.acpx?.available_models;
   const currentModelId = record.acpx?.current_model_id;
-  if (!available || available.length === 0) {
+  const advertised = modelIdsFromConfigOptions(record) ?? record.acpx?.available_models;
+  if (!advertised || advertised.length === 0) {
     return currentModelId === undefined
       ? {}
       : { models: { currentModelId, availableModelIds: [] } };
@@ -258,7 +311,7 @@ function buildModelsField(record: SessionRecord): { models?: AcpRuntimeSessionMo
   return {
     models: {
       ...(currentModelId !== undefined ? { currentModelId } : {}),
-      availableModelIds: [...available],
+      availableModelIds: [...advertised],
     },
   };
 }
