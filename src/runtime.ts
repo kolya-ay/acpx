@@ -38,11 +38,11 @@ export {
 } from "./runtime/public/handle-state.js";
 export type {
   AcpAgentRegistry,
+  AcpEventMeta,
   AcpFileSessionStoreOptions,
   AcpPermissionDecision,
   AcpPermissionRequest,
   AcpRuntime,
-  AcpRuntimeAvailableCommand,
   AcpRuntimeCapabilities,
   AcpRuntimeDoctorReport,
   AcpRuntimeEnsureInput,
@@ -64,6 +64,7 @@ export type {
   AcpSessionRecord,
   AcpSessionStore,
   AcpSessionUpdateTag,
+  AvailableCommand,
   SessionAgentOptions,
   SystemPromptOption,
 } from "./runtime/public/contract.js";

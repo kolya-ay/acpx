@@ -1,3 +1,5 @@
+import type { AcpEventMeta } from "./contract.js";
+
 export type AcpxHandleState = {
   name: string;
   agent: string;
@@ -10,6 +12,15 @@ export type AcpxHandleState = {
 
 export function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/**
+ * Spread helper that forwards an SDK `_meta` envelope onto a top-level event
+ * if present. Returns an empty object when `payload._meta` is missing or
+ * not a record — kept symmetric with the contract's `AcpEventMeta` type.
+ */
+export function forwardMeta(payload: Record<string, unknown>): { _meta?: AcpEventMeta } {
+  return isRecord(payload._meta) ? { _meta: payload._meta } : {};
 }
 
 export function asTrimmedString(value: unknown): string {

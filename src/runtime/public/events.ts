@@ -1,12 +1,17 @@
-import type { ToolCallContent, ToolCallLocation, ToolKind } from "@agentclientprotocol/sdk";
 import type {
-  AcpRuntimeAvailableCommand,
+  AvailableCommand,
+  ToolCallContent,
+  ToolCallLocation,
+  ToolKind,
+} from "@agentclientprotocol/sdk";
+import type {
   AcpRuntimeEvent,
   AcpRuntimeUsageBreakdown,
   AcpRuntimeUsageCost,
   AcpSessionUpdateTag,
 } from "./contract.js";
-import { asOptionalString, asString, asTrimmedString, isRecord } from "./shared.js";
+import { validateAvailableCommand } from "./sdk-validators.js";
+import { asOptionalString, asString, asTrimmedString, forwardMeta, isRecord } from "./shared.js";
 
 const TOOL_OUTPUT_SUMMARY_MAX_CHARS = 500;
 
@@ -71,19 +76,11 @@ function resolveStatusTextForTag(params: {
 type StatusTextResolver = (payload: Record<string, unknown>) => string | null;
 
 const STATUS_TEXT_RESOLVERS: Partial<Record<AcpSessionUpdateTag, StatusTextResolver>> = {
-  available_commands_update: availableCommandsStatusText,
   current_mode_update: currentModeStatusText,
   config_option_update: configOptionStatusText,
   session_info_update: sessionInfoStatusText,
   plan: planStatusText,
 };
-
-function availableCommandsStatusText(payload: Record<string, unknown>): string {
-  const commands = Array.isArray(payload.availableCommands) ? payload.availableCommands : [];
-  return commands.length > 0
-    ? `available commands updated (${commands.length})`
-    : "available commands updated";
-}
 
 function currentModeStatusText(payload: Record<string, unknown>): string {
   const mode =
@@ -483,31 +480,13 @@ function buildUsageUpdateEvent(parts: {
 
 function availableCommandsUpdateEvent(payload: Record<string, unknown>): AcpRuntimeEvent | null {
   const raw = Array.isArray(payload.availableCommands) ? payload.availableCommands : [];
-  const availableCommands: AcpRuntimeAvailableCommand[] = [];
-  for (const entry of raw) {
-    if (!isRecord(entry)) {
-      continue;
-    }
-    const name = asTrimmedString(entry.name);
-    if (!name) {
-      continue;
-    }
-    const description = asTrimmedString(entry.description);
-    availableCommands.push({
-      name,
-      ...(description ? { description } : {}),
-      hasInput: entry.input != null,
-    });
-  }
-  const text =
-    availableCommands.length > 0
-      ? `available commands updated (${availableCommands.length})`
-      : "available commands updated";
+  const availableCommands = raw
+    .map((entry) => validateAvailableCommand(entry))
+    .filter((entry): entry is AvailableCommand => entry !== undefined);
   return {
-    type: "status",
-    text,
-    tag: "available_commands_update",
+    type: "available_commands_update",
     availableCommands,
+    ...forwardMeta(payload),
   };
 }
 

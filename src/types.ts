@@ -1,6 +1,7 @@
 import type {
   AgentCapabilities,
   AnyMessage,
+  AvailableCommand,
   McpServer,
   RequestPermissionRequest,
   SessionNotification,
@@ -337,12 +338,6 @@ export type SessionUsageCost = {
   currency?: string;
 };
 
-export type SessionAvailableCommand = {
-  name: string;
-  description?: string;
-  has_input?: boolean;
-};
-
 export type SessionConversation = {
   title?: string | null;
   messages: SessionMessage[];
@@ -360,7 +355,7 @@ export type SessionAcpxState = {
   current_model_id?: string;
   available_models?: string[];
   model_control?: "config_option" | "legacy_set_model";
-  available_commands?: SessionAvailableCommand[];
+  available_commands?: AvailableCommand[];
   config_options?: SessionConfigOption[];
   session_options?: {
     model?: string;

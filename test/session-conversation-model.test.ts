@@ -198,7 +198,7 @@ test("conversation model captures prompt, chunks, tool calls, and metadata", () 
 
   assert.equal(acpxState?.current_mode_id, "code");
   assert.deepEqual(acpxState?.available_commands, [
-    { name: "create_plan", description: "create plan", has_input: false },
+    { name: "create_plan", description: "create plan" },
   ]);
 });
 
@@ -416,7 +416,9 @@ test("cloneSessionAcpxState preserves desired mode id", () => {
     desired_config_options: {
       reasoning_effort: "high",
     },
-    available_commands: [{ name: "review", description: "Review changes", has_input: true }],
+    available_commands: [
+      { name: "review", description: "Review changes", input: { hint: "args" } },
+    ],
     session_options: {
       model: "sonnet",
       allowed_tools: ["Read", "Grep"],
@@ -430,7 +432,7 @@ test("cloneSessionAcpxState preserves desired mode id", () => {
     reasoning_effort: "high",
   });
   assert.deepEqual(cloned?.available_commands, [
-    { name: "review", description: "Review changes", has_input: true },
+    { name: "review", description: "Review changes", input: { hint: "args" } },
   ]);
   assert.deepEqual(cloned?.session_options, {
     model: "sonnet",
