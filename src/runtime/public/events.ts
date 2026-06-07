@@ -68,24 +68,6 @@ function resolveStructuredPromptPayload(parsed: Record<string, unknown>): {
   };
 }
 
-function resolveStatusTextForTag(params: {
-  tag: AcpSessionUpdateTag;
-  payload: Record<string, unknown>;
-}): string | null {
-  const resolver = STATUS_TEXT_RESOLVERS[params.tag];
-  return resolver ? resolver(params.payload) : null;
-}
-
-type StatusTextResolver = (payload: Record<string, unknown>) => string | null;
-
-const STATUS_TEXT_RESOLVERS: Partial<Record<AcpSessionUpdateTag, StatusTextResolver>> = {
-  session_info_update: sessionInfoStatusText,
-};
-
-function sessionInfoStatusText(payload: Record<string, unknown>): string {
-  return asTrimmedString(payload.summary) || asTrimmedString(payload.message) || "session updated";
-}
-
 function resolveTextChunk(params: {
   payload: Record<string, unknown>;
   stream: "output" | "thought";
@@ -408,7 +390,7 @@ const PROMPT_EVENT_PARSERS: Record<string, PromptEventParser> = {
   available_commands_update: availableCommandsUpdateEvent,
   current_mode_update: currentModeUpdateEvent,
   config_option_update: configOptionUpdateEvent,
-  session_info_update: (payload) => statusUpdateEvent("session_info_update", payload),
+  session_info_update: sessionInfoUpdateEvent,
   plan: planUpdateEvent,
   client_operation: clientOperationEvent,
   update: updateStatusEvent,
@@ -500,6 +482,39 @@ function planUpdateEvent(payload: Record<string, unknown>): AcpRuntimeEvent {
   };
 }
 
+function readNullableString(
+  payload: Record<string, unknown>,
+  key: string,
+): { present: true; value: string | null } | { present: false } {
+  if (!Object.hasOwn(payload, key)) {
+    return { present: false };
+  }
+  const raw = payload[key];
+  if (raw === null) {
+    return { present: true, value: null };
+  }
+  if (typeof raw === "string") {
+    return { present: true, value: raw };
+  }
+  // Present but neither string nor null — treat as "no change" rather than
+  // forwarding garbage. SDK shape requires `string | null` here.
+  return { present: false };
+}
+
+function sessionInfoUpdateEvent(payload: Record<string, unknown>): AcpRuntimeEvent {
+  // Tri-state on optional+nullable: present-as-null forwards null (explicit
+  // clear); present-as-string forwards the string; absent omits the field
+  // entirely. Consumers must distinguish "no change" from "clear".
+  const title = readNullableString(payload, "title");
+  const updatedAt = readNullableString(payload, "updatedAt");
+  return {
+    type: "session_info_update",
+    ...(title.present ? { title: title.value } : {}),
+    ...(updatedAt.present ? { updatedAt: updatedAt.value } : {}),
+    ...forwardMeta(payload),
+  };
+}
+
 function availableCommandsUpdateEvent(payload: Record<string, unknown>): AcpRuntimeEvent | null {
   const raw = Array.isArray(payload.availableCommands) ? payload.availableCommands : [];
   const availableCommands = raw
@@ -564,17 +579,6 @@ function firstFiniteNumber(
     }
   }
   return undefined;
-}
-
-function statusUpdateEvent(
-  tag: AcpSessionUpdateTag,
-  payload: Record<string, unknown>,
-): AcpRuntimeEvent | null {
-  const text = resolveStatusTextForTag({ tag, payload });
-  if (!text) {
-    return null;
-  }
-  return { type: "status", text, tag };
 }
 
 function clientOperationEvent(

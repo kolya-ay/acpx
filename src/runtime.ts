@@ -68,6 +68,7 @@ export type {
   PlanEntry,
   SessionAgentOptions,
   SessionConfigOption,
+  SessionInfoUpdate,
   SessionModeId,
   SystemPromptOption,
 } from "./runtime/public/contract.js";
