@@ -1,5 +1,6 @@
 import type {
   AvailableCommand,
+  PlanEntry,
   SessionConfigOption,
   SessionModeId,
   ToolCallContent,
@@ -26,6 +27,7 @@ export type { AcpPermissionDecision, AcpPermissionRequest } from "../../types.js
  */
 export type {
   AvailableCommand,
+  PlanEntry,
   SessionConfigOption,
   SessionModeId,
 } from "@agentclientprotocol/sdk";
@@ -240,6 +242,18 @@ export type AcpRuntimeEvent =
   | {
       type: "config_option_update";
       configOptions: SessionConfigOption[];
+      _meta?: AcpEventMeta;
+    }
+  /**
+   * Mirrors ACP `plan`. Carries the FULL plan snapshot as SDK
+   * `PlanEntry[]` (not an incremental delta). Each entry preserves
+   * `content`, `priority`, and `status` directly. Entries that fail
+   * SDK shape validation (missing/empty `content`, unknown `priority`
+   * or `status`) are dropped on parse.
+   */
+  | {
+      type: "plan";
+      entries: PlanEntry[];
       _meta?: AcpEventMeta;
     }
   /**
