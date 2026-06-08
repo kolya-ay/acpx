@@ -23,6 +23,10 @@ export function forwardMeta(payload: Record<string, unknown>): { _meta?: AcpEven
   return isRecord(payload._meta) ? { _meta: payload._meta } : {};
 }
 
+export function asRecord(value: unknown): Record<string, unknown> | undefined {
+  return isRecord(value) ? value : undefined;
+}
+
 export function asTrimmedString(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
 }

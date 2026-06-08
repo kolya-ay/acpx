@@ -1,13 +1,7 @@
+import { asRecord } from "../runtime/public/shared.js";
 import type { OutputErrorAcpPayload } from "../types.js";
 
 const RESOURCE_NOT_FOUND_ACP_CODES = new Set([-32001, -32002]);
-
-function asRecord(value: unknown): Record<string, unknown> | undefined {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return undefined;
-  }
-  return value as Record<string, unknown>;
-}
 
 export function toAcpErrorPayload(value: unknown): OutputErrorAcpPayload | undefined {
   const record = asRecord(value);

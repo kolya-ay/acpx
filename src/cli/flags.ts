@@ -6,6 +6,7 @@ import {
   resolveAgentCommand as resolveAgentCommandFromRegistry,
 } from "../agent-registry.js";
 import type { SystemPromptOption } from "../runtime/engine/session-options.js";
+import { asRecord } from "../runtime/public/shared.js";
 import { DEFAULT_QUEUE_OWNER_TTL_MS } from "../session/session.js";
 import {
   AUTH_POLICIES,
@@ -98,12 +99,6 @@ export type SessionsPruneFlags = {
   olderThan?: number;
   includeHistory?: boolean;
 };
-
-function asRecord(value: unknown): Record<string, unknown> | undefined {
-  return Boolean(value) && typeof value === "object" && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : undefined;
-}
 
 function stringOption(value: unknown): string | undefined {
   return typeof value === "string" ? value : undefined;

@@ -3,6 +3,7 @@ import {
   PermissionDeniedError,
   PermissionPromptUnavailableError,
 } from "../errors.js";
+import { asRecord } from "../runtime/public/shared.js";
 import {
   EXIT_CODES,
   OUTPUT_ERROR_CODES,
@@ -45,13 +46,6 @@ export type NormalizeOutputErrorOptions = {
   retryable?: boolean;
   acp?: OutputErrorAcpPayload;
 };
-
-function asRecord(value: unknown): Record<string, unknown> | undefined {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return undefined;
-  }
-  return value as Record<string, unknown>;
-}
 
 function isAuthRequiredMessage(value: string | undefined): boolean {
   if (!value) {

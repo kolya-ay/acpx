@@ -8,6 +8,7 @@ import type {
   UsageUpdate,
 } from "@agentclientprotocol/sdk";
 import { textPrompt } from "../prompt-content.js";
+import { asRecord } from "../runtime/public/shared.js";
 import type {
   ClientOperation,
   PromptInput,
@@ -405,13 +406,6 @@ function applyToolResultUpdate(
 
 function hasToolResultPatch(update: ToolCall | ToolCallUpdate): boolean {
   return ["rawOutput", "status", "title", "kind"].some((key) => hasOwn(update, key));
-}
-
-function asRecord(value: unknown): Record<string, unknown> | undefined {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return undefined;
-  }
-  return value as Record<string, unknown>;
 }
 
 function numberField(source: Record<string, unknown>, keys: readonly string[]): number | undefined {

@@ -1,17 +1,11 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { asRecord } from "./runtime/public/shared.js";
 import {
   PERMISSION_POLICY_ACTIONS,
   type PermissionPolicy,
   type PermissionPolicyAction,
 } from "./types.js";
-
-function asRecord(value: unknown): Record<string, unknown> | undefined {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return undefined;
-  }
-  return value as Record<string, unknown>;
-}
 
 function parseRuleList(value: unknown, key: string, source: string): string[] | undefined {
   if (value == null) {

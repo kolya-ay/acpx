@@ -2,6 +2,7 @@ import type { SetSessionConfigOptionResponse } from "@agentclientprotocol/sdk";
 import { toAcpErrorPayload } from "../../acp/error-shapes.js";
 import { isAcpJsonRpcMessage } from "../../acp/jsonrpc.js";
 import { isPromptInput, textPrompt } from "../../prompt-content.js";
+import { asRecord } from "../../runtime/public/shared.js";
 import {
   OUTPUT_ERROR_CODES,
   OUTPUT_ERROR_ORIGINS,
@@ -173,13 +174,6 @@ export type QueueOwnerMessage =
   | QueueOwnerSetConfigOptionResultMessage
   | QueueOwnerCloseSessionResultMessage
   | QueueOwnerErrorMessage;
-
-function asRecord(value: unknown): Record<string, unknown> | undefined {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return undefined;
-  }
-  return value as Record<string, unknown>;
-}
 
 function isPermissionMode(value: unknown): value is PermissionMode {
   return value === "approve-all" || value === "approve-reads" || value === "deny-all";

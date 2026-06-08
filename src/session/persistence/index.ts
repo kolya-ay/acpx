@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { asRecord } from "../../runtime/public/shared.js";
 import type { SessionRecord } from "../../types.js";
 import { parseSessionRecord } from "./parse.js";
 
@@ -21,13 +22,6 @@ type SessionIndex = {
   files: string[];
   entries: SessionIndexEntry[];
 };
-
-function asRecord(value: unknown): Record<string, unknown> | undefined {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return undefined;
-  }
-  return value as Record<string, unknown>;
-}
 
 function parseIndexEntry(raw: unknown): SessionIndexEntry | undefined {
   const record = asRecord(raw);

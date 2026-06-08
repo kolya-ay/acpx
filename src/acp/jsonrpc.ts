@@ -1,16 +1,10 @@
 import type { AnyMessage, SessionNotification } from "@agentclientprotocol/sdk";
+import { asRecord } from "../runtime/public/shared.js";
 
 type JsonRpcId = string | number | null;
 
-function asRecord(value: unknown): Record<string, unknown> | null {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return null;
-  }
-  return value as Record<string, unknown>;
-}
-
 export function isAcpMessageObject(value: unknown): value is AnyMessage {
-  return asRecord(value) !== null;
+  return asRecord(value) !== undefined;
 }
 
 function hasValidId(value: unknown): value is JsonRpcId {

@@ -1,13 +1,7 @@
 import type { EnvVariable, HttpHeader, McpServer } from "@agentclientprotocol/sdk";
+import { asRecord } from "./runtime/public/shared.js";
 
 type UnknownRecord = Record<string, unknown>;
-
-function asRecord(value: unknown): UnknownRecord | undefined {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return undefined;
-  }
-  return value as UnknownRecord;
-}
 
 function parseNonEmptyString(value: unknown, path: string): string {
   if (typeof value !== "string" || value.trim().length === 0) {

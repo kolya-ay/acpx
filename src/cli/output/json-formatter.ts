@@ -1,4 +1,5 @@
 import { buildJsonRpcErrorResponse } from "../../acp/jsonrpc-error.js";
+import { asRecord } from "../../runtime/public/shared.js";
 import type {
   OutputErrorAcpPayload,
   OutputErrorCode,
@@ -26,13 +27,6 @@ type JsonRpcResponseMessage = {
 };
 
 const DEFAULT_JSON_SESSION_ID = "unknown";
-
-function asRecord(value: unknown): Record<string, unknown> | undefined {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return undefined;
-  }
-  return value as Record<string, unknown>;
-}
 
 function jsonRpcIdKey(value: unknown): string | undefined {
   if (typeof value === "string") {
