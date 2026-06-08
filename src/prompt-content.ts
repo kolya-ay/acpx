@@ -1,4 +1,5 @@
 import type { AgentCapabilities, ContentBlock } from "@agentclientprotocol/sdk";
+import { asRecord } from "./runtime/public/shared.js";
 
 export type PromptInput = ContentBlock[];
 
@@ -7,13 +8,6 @@ export class PromptInputValidationError extends Error {
     super(message);
     this.name = "PromptInputValidationError";
   }
-}
-
-function asRecord(value: unknown): Record<string, unknown> | undefined {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return undefined;
-  }
-  return value as Record<string, unknown>;
 }
 
 function isNonEmptyString(value: unknown): value is string {

@@ -13,6 +13,7 @@ import {
   parseJsonRpcErrorMessage,
   parsePromptStopReason,
 } from "../../acp/jsonrpc.js";
+import { asRecord } from "../../runtime/public/shared.js";
 import type {
   AcpJsonRpcMessage,
   ClientOperation,
@@ -104,13 +105,6 @@ function toStatusLabel(status: NormalizedToolStatus): string {
     default:
       return "running";
   }
-}
-
-function asRecord(value: unknown): Record<string, unknown> | undefined {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return undefined;
-  }
-  return value as Record<string, unknown>;
 }
 
 function extractJsonRpcMethod(message: AnyMessage): string | undefined {

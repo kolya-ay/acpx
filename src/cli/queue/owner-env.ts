@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { parseOptionalMcpServers } from "../../mcp-servers.js";
+import { asRecord } from "../../runtime/public/shared.js";
 import {
   runSessionQueueOwner,
   type QueueOwnerRuntimeOptions,
@@ -11,13 +12,6 @@ const QUEUE_OWNER_PAYLOAD_FILE_ENV = "ACPX_QUEUE_OWNER_PAYLOAD_FILE";
 const QUEUE_OWNER_PAYLOAD_ENV = "ACPX_QUEUE_OWNER_PAYLOAD";
 
 type UnknownRecord = Record<string, unknown>;
-
-function asRecord(value: unknown): UnknownRecord | undefined {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return undefined;
-  }
-  return value as UnknownRecord;
-}
 
 export function parseQueueOwnerPayload(raw: string): QueueOwnerRuntimeOptions {
   const parsed = JSON.parse(raw) as unknown;

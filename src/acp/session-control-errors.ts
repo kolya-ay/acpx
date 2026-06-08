@@ -1,13 +1,7 @@
+import { asRecord } from "../runtime/public/shared.js";
 import { extractAcpError } from "./error-shapes.js";
 
 const SESSION_CONTROL_UNSUPPORTED_ACP_CODES = new Set([-32601, -32602]);
-
-function asRecord(value: unknown): Record<string, unknown> | undefined {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return undefined;
-  }
-  return value as Record<string, unknown>;
-}
 
 function isLikelySessionControlUnsupportedError(acp: {
   code: number;

@@ -3,6 +3,7 @@ import {
   validateAvailableCommand,
   validatePlanEntry,
 } from "../../runtime/public/sdk-validators.js";
+import { asRecord } from "../../runtime/public/shared.js";
 import type {
   SessionAcpxState,
   SessionEventLog,
@@ -12,13 +13,6 @@ import type {
 import { SESSION_RECORD_SCHEMA } from "../../types.js";
 import { defaultSessionEventLog } from "../event-log.js";
 import { normalizeRuntimeSessionId } from "../runtime-session-id.js";
-
-function asRecord(value: unknown): Record<string, unknown> | undefined {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return undefined;
-  }
-  return value as Record<string, unknown>;
-}
 
 function hasOwn(source: object, key: string): boolean {
   return Object.prototype.hasOwnProperty.call(source, key);
