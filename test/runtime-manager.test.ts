@@ -15,6 +15,7 @@ import type {
   AcpRuntimeTurn,
   AcpRuntimeTurnResult,
 } from "../src/runtime/public/contract.js";
+import { AcpRuntimeError } from "../src/runtime/public/errors.js";
 import {
   createRuntimeOptions,
   InMemorySessionStore,
@@ -167,7 +168,10 @@ test("AcpRuntimeManager creates and resumes sessions through the client", async 
     ({
       initializeResult: {
         protocolVersion: 1,
-        agentCapabilities: { loadSession: true, sessionCapabilities: { resume: {} } },
+        agentCapabilities: {
+          loadSession: true,
+          sessionCapabilities: { resume: {} },
+        },
       },
       start: async () => {},
       close: async () => {},
@@ -209,7 +213,9 @@ test("AcpRuntimeManager creates and resumes sessions through the client", async 
       hasReusableSession: () => false,
       supportsLoadSession: () => true,
       supportsResumeSession: () => true,
-      loadSessionWithOptions: async () => ({ agentSessionId: "runtime-session" }),
+      loadSessionWithOptions: async () => ({
+        agentSessionId: "runtime-session",
+      }),
       getAgentLifecycleSnapshot: () => lifecycle,
       prompt: async () => ({ stopReason: "end_turn" }),
       requestCancelActivePrompt: async () => false,
@@ -282,7 +288,9 @@ test("AcpRuntimeManager creates a fresh record for each oneshot session", async 
           hasReusableSession: () => false,
           supportsLoadSession: () => true,
           supportsResumeSession: () => false,
-          loadSessionWithOptions: async () => ({ agentSessionId: "runtime-session" }),
+          loadSessionWithOptions: async () => ({
+            agentSessionId: "runtime-session",
+          }),
           getAgentLifecycleSnapshot: () => ({ running: true }),
           prompt: async () => ({ stopReason: "end_turn" }),
           requestCancelActivePrompt: async () => false,
@@ -384,7 +392,12 @@ test("AcpRuntimeManager streams runtime events and saves updated status", async 
   const { events, result } = await collectTurn(turn);
 
   assert.deepEqual(events, [
-    { type: "text_delta", text: "hello", stream: "output", tag: "agent_message_chunk" },
+    {
+      type: "text_delta",
+      text: "hello",
+      stream: "output",
+      tag: "agent_message_chunk",
+    },
     { type: "status", text: "write_file ok saved notes.md" },
   ]);
   assert.deepEqual(result, { status: "completed", stopReason: "end_turn" });
@@ -666,11 +679,21 @@ test("AcpRuntimeManager keeps reusable persistent clients pooled across turns an
   assert.equal(promptCalls, 2);
   assert.equal(closeCalls, 0);
   assert.deepEqual(firstEvents, [
-    { type: "text_delta", text: "turn 1", stream: "output", tag: "agent_message_chunk" },
+    {
+      type: "text_delta",
+      text: "turn 1",
+      stream: "output",
+      tag: "agent_message_chunk",
+    },
     { type: "done", stopReason: "end_turn" },
   ]);
   assert.deepEqual(secondEvents, [
-    { type: "text_delta", text: "turn 2", stream: "output", tag: "agent_message_chunk" },
+    {
+      type: "text_delta",
+      text: "turn 2",
+      stream: "output",
+      tag: "agent_message_chunk",
+    },
     { type: "done", stopReason: "end_turn" },
   ]);
 
@@ -740,7 +763,12 @@ test("AcpRuntimeManager runTurn remains a compatibility adapter over startTurn",
   );
 
   assert.deepEqual(events, [
-    { type: "text_delta", text: "legacy", stream: "output", tag: "agent_message_chunk" },
+    {
+      type: "text_delta",
+      text: "legacy",
+      stream: "output",
+      tag: "agent_message_chunk",
+    },
     { type: "done", stopReason: "end_turn" },
   ]);
 });
@@ -770,7 +798,10 @@ test("AcpRuntimeManager retains a reusable persistent client across turns", asyn
           },
           createSession: async () => {
             createSessionCalls += 1;
-            return { sessionId: "pooled-persistent-sid", agentSessionId: "pooled-agent-id" };
+            return {
+              sessionId: "pooled-persistent-sid",
+              agentSessionId: "pooled-agent-id",
+            };
           },
           loadSession: async () => ({ agentSessionId: "unused" }),
           hasReusableSession: (sessionId: string) => sessionId === "pooled-persistent-sid",
@@ -903,7 +934,12 @@ test("AcpRuntimeManager closeStream suppresses future live events while preservi
 
   assert.deepEqual(await firstEventPromise, {
     done: false,
-    value: { type: "text_delta", text: "visible", stream: "output", tag: "agent_message_chunk" },
+    value: {
+      type: "text_delta",
+      text: "visible",
+      stream: "output",
+      tag: "agent_message_chunk",
+    },
   });
 
   await turn.closeStream({
@@ -962,7 +998,9 @@ test("AcpRuntimeManager does not pool a persistent client after active close", a
     hasReusableSession: (sessionId) => sessionId === "active-close-sid",
     supportsLoadSession: () => true,
     supportsResumeSession: () => false,
-    loadSessionWithOptions: async () => ({ agentSessionId: "active-close-agent-id" }),
+    loadSessionWithOptions: async () => ({
+      agentSessionId: "active-close-agent-id",
+    }),
     getAgentLifecycleSnapshot: () => ({ running: promptActive }),
     prompt: async () => {
       promptActive = true;
@@ -1043,7 +1081,9 @@ test("AcpRuntimeManager live checkpoints preserve active close state", async () 
     supportsResumeSession: () => false,
     supportsCloseSession: () => true,
     closeSession: async () => {},
-    loadSessionWithOptions: async () => ({ agentSessionId: "active-close-checkpoint-agent-id" }),
+    loadSessionWithOptions: async () => ({
+      agentSessionId: "active-close-checkpoint-agent-id",
+    }),
     getAgentLifecycleSnapshot: () => ({ running: promptActive }),
     prompt: async () => {
       promptActive = true;
@@ -1161,7 +1201,12 @@ test("AcpRuntimeManager accepts a session reply even when the prompt RPC times o
   const { events, result } = await collectTurn(turn);
 
   assert.deepEqual(events, [
-    { type: "text_delta", text: "late reply", stream: "output", tag: "agent_message_chunk" },
+    {
+      type: "text_delta",
+      text: "late reply",
+      stream: "output",
+      tag: "agent_message_chunk",
+    },
   ]);
   assert.deepEqual(result, { status: "completed", stopReason: "end_turn" });
 });
@@ -1248,8 +1293,18 @@ test("AcpRuntimeManager waits for late reply chunks to settle before ending a sa
   const { events, result } = await collectTurn(turn);
 
   assert.deepEqual(events, [
-    { type: "text_delta", text: "late", stream: "output", tag: "agent_message_chunk" },
-    { type: "text_delta", text: " reply", stream: "output", tag: "agent_message_chunk" },
+    {
+      type: "text_delta",
+      text: "late",
+      stream: "output",
+      tag: "agent_message_chunk",
+    },
+    {
+      type: "text_delta",
+      text: " reply",
+      stream: "output",
+      tag: "agent_message_chunk",
+    },
   ]);
   assert.deepEqual(result, { status: "completed", stopReason: "end_turn" });
 });
@@ -1459,7 +1514,11 @@ test("AcpRuntimeManager maps generic thinking config to refreshed advertised eff
     },
   });
   const store = new InMemorySessionStore([record]);
-  const setConfigCalls: Array<{ sessionId: string; key: string; value: string }> = [];
+  const setConfigCalls: Array<{
+    sessionId: string;
+    key: string;
+    value: string;
+  }> = [];
   const manager = new AcpRuntimeManager(
     createRuntimeOptions({ cwd: "/workspace", sessionStore: store }),
     {
@@ -1607,7 +1666,11 @@ test("AcpRuntimeManager maps active generic thinking config against live adverti
     },
   });
   const store = new InMemorySessionStore([record]);
-  const setConfigCalls: Array<{ sessionId: string; key: string; value: string }> = [];
+  const setConfigCalls: Array<{
+    sessionId: string;
+    key: string;
+    value: string;
+  }> = [];
   let resolvePromptStart!: () => void;
   let resolvePrompt!: (value: { stopReason: string }) => void;
   const promptStarted = new Promise<void>((resolve) => {
@@ -1713,7 +1776,11 @@ test("AcpRuntimeManager waits for active load refresh before resolving generic c
     },
   });
   const store = new InMemorySessionStore([record]);
-  const setConfigCalls: Array<{ sessionId: string; key: string; value: string }> = [];
+  const setConfigCalls: Array<{
+    sessionId: string;
+    key: string;
+    value: string;
+  }> = [];
   let resolveLoadStarted!: () => void;
   let resolveLoad!: () => void;
   let resolvePrompt!: (value: { stopReason: string }) => void;
@@ -1833,7 +1900,10 @@ test("AcpRuntimeManager waits for oneshot load fallback to resolve before sendin
   const client: FakeClient = {
     start: async () => {},
     close: async () => {},
-    createSession: async () => ({ sessionId: "fresh-session", agentSessionId: "fresh-agent" }),
+    createSession: async () => ({
+      sessionId: "fresh-session",
+      agentSessionId: "fresh-agent",
+    }),
     loadSession: async () => ({ agentSessionId: "unused" }),
     hasReusableSession: () => false,
     supportsLoadSession: () => true,
@@ -1909,7 +1979,10 @@ test("AcpRuntimeManager honors aborts requested before prompt starts after onesh
   const client: FakeClient = {
     start: async () => {},
     close: async () => {},
-    createSession: async () => ({ sessionId: "fresh-session", agentSessionId: "fresh-agent" }),
+    createSession: async () => ({
+      sessionId: "fresh-session",
+      agentSessionId: "fresh-agent",
+    }),
     loadSession: async () => ({ agentSessionId: "unused" }),
     hasReusableSession: () => false,
     supportsLoadSession: () => true,
@@ -2090,7 +2163,10 @@ test("AcpRuntimeManager closes the backend session when discarding persistent st
           close: async () => {},
           createSession: async () => {
             recreatedSessions += 1;
-            return { sessionId: "fresh-discard-sid", agentSessionId: "fresh-agent" };
+            return {
+              sessionId: "fresh-discard-sid",
+              agentSessionId: "fresh-agent",
+            };
           },
           loadSession: async () => ({ agentSessionId: "unused" }),
           hasReusableSession: () => false,
@@ -2193,7 +2269,11 @@ test("AcpRuntimeManager applies timeoutMs to backend session shutdown during dis
   let closeSessionCalls = 0;
   const never = new Promise<void>(() => {});
   const manager = new AcpRuntimeManager(
-    createRuntimeOptions({ cwd: "/workspace", sessionStore: store, timeoutMs: 5 }),
+    createRuntimeOptions({
+      cwd: "/workspace",
+      sessionStore: store,
+      timeoutMs: 5,
+    }),
     {
       clientFactory: () =>
         ({
@@ -2296,7 +2376,7 @@ test("AcpRuntimeManager fails offline persistent controls clearly when session r
   assert.equal(createSessionCalls, 0);
 });
 
-test("AcpRuntimeManager surfaces normalized prompt failures", async () => {
+test("AcpRuntimeManager wraps non-AcpRuntimeError prompt failures as ACP_TURN_FAILED", async () => {
   const record = makeSessionRecord({
     acpxRecordId: "error-session",
     acpSessionId: "error-sid",
@@ -2304,6 +2384,12 @@ test("AcpRuntimeManager surfaces normalized prompt failures", async () => {
     cwd: "/workspace",
   });
   const store = new InMemorySessionStore([record]);
+  const promptError = new AcpxOperationalError("prompt exploded", {
+    outputCode: "RUNTIME",
+    detailCode: "AGENT_DISCONNECTED",
+    origin: "acp",
+    retryable: true,
+  });
   const manager = new AcpRuntimeManager(
     createRuntimeOptions({ cwd: "/workspace", sessionStore: store }),
     {
@@ -2319,12 +2405,7 @@ test("AcpRuntimeManager surfaces normalized prompt failures", async () => {
           loadSessionWithOptions: async () => ({ agentSessionId: "unused" }),
           getAgentLifecycleSnapshot: () => ({ running: true }),
           prompt: async () => {
-            throw new AcpxOperationalError("prompt exploded", {
-              outputCode: "RUNTIME",
-              detailCode: "AGENT_DISCONNECTED",
-              origin: "acp",
-              retryable: true,
-            });
+            throw promptError;
           },
           requestCancelActivePrompt: async () => false,
           hasActivePrompt: () => false,
@@ -2349,10 +2430,11 @@ test("AcpRuntimeManager surfaces normalized prompt failures", async () => {
   assert.deepEqual(result, {
     status: "failed",
     error: {
-      code: "RUNTIME",
+      code: "ACP_TURN_FAILED",
       detailCode: "AGENT_DISCONNECTED",
       message: "prompt exploded",
       retryable: true,
+      cause: promptError,
     },
   });
   const legacyEvents = await collectEvents(
@@ -2367,12 +2449,181 @@ test("AcpRuntimeManager surfaces normalized prompt failures", async () => {
   assert.deepEqual(legacyEvents, [
     {
       type: "error",
-      code: "RUNTIME",
+      code: "ACP_TURN_FAILED",
       detailCode: "AGENT_DISCONNECTED",
       message: "prompt exploded",
       retryable: true,
+      cause: promptError,
     },
   ]);
+});
+
+test("AcpRuntimeManager surfaces AcpRuntimeError code and cause on failed turn result", async () => {
+  const record = makeSessionRecord({
+    acpxRecordId: "acp-error-session",
+    acpSessionId: "acp-error-sid",
+    agentCommand: "codex --acp",
+    cwd: "/workspace",
+  });
+  const store = new InMemorySessionStore([record]);
+  const underlying = new Error("transport closed");
+  const acpError = new AcpRuntimeError("ACP_TURN_FAILED", "agent crashed", {
+    cause: underlying,
+  });
+  const manager = new AcpRuntimeManager(
+    createRuntimeOptions({ cwd: "/workspace", sessionStore: store }),
+    {
+      clientFactory: () =>
+        ({
+          start: async () => {},
+          close: async () => {},
+          createSession: async () => ({ sessionId: "unused" }),
+          loadSession: async () => ({ agentSessionId: "unused" }),
+          hasReusableSession: () => true,
+          supportsLoadSession: () => true,
+          supportsResumeSession: () => false,
+          loadSessionWithOptions: async () => ({ agentSessionId: "unused" }),
+          getAgentLifecycleSnapshot: () => ({ running: true }),
+          prompt: async () => {
+            throw acpError;
+          },
+          requestCancelActivePrompt: async () => false,
+          hasActivePrompt: () => false,
+          setSessionMode: async () => {},
+          setSessionConfigOption: async () => {},
+          clearEventHandlers: () => {},
+          setEventHandlers: () => {},
+        }) as never,
+    },
+  );
+
+  const turn = manager.startTurn({
+    handle: createHandle("acp-error-session"),
+    content: [{ type: "text", text: "hello" }],
+    mode: "prompt",
+    sessionMode: "persistent",
+    requestId: "req-acp-error",
+  });
+  const { result } = await collectTurn(turn);
+
+  assert.equal(result.status, "failed");
+  if (result.status !== "failed") {
+    return;
+  }
+  assert.equal(result.error.code, "ACP_TURN_FAILED");
+  assert.equal(result.error.message, "agent crashed");
+  assert.equal(result.error.cause, underlying);
+  assert.equal(result.error.retryable, false);
+});
+
+test("AcpRuntimeManager omits cause when AcpRuntimeError is thrown without one", async () => {
+  const record = makeSessionRecord({
+    acpxRecordId: "acp-error-no-cause",
+    acpSessionId: "acp-error-no-cause-sid",
+    agentCommand: "codex --acp",
+    cwd: "/workspace",
+  });
+  const store = new InMemorySessionStore([record]);
+  const acpError = new AcpRuntimeError("ACP_TURN_FAILED", "something");
+  const manager = new AcpRuntimeManager(
+    createRuntimeOptions({ cwd: "/workspace", sessionStore: store }),
+    {
+      clientFactory: () =>
+        ({
+          start: async () => {},
+          close: async () => {},
+          createSession: async () => ({ sessionId: "unused" }),
+          loadSession: async () => ({ agentSessionId: "unused" }),
+          hasReusableSession: () => true,
+          supportsLoadSession: () => true,
+          supportsResumeSession: () => false,
+          loadSessionWithOptions: async () => ({ agentSessionId: "unused" }),
+          getAgentLifecycleSnapshot: () => ({ running: true }),
+          prompt: async () => {
+            throw acpError;
+          },
+          requestCancelActivePrompt: async () => false,
+          hasActivePrompt: () => false,
+          setSessionMode: async () => {},
+          setSessionConfigOption: async () => {},
+          clearEventHandlers: () => {},
+          setEventHandlers: () => {},
+        }) as never,
+    },
+  );
+
+  const turn = manager.startTurn({
+    handle: createHandle("acp-error-no-cause"),
+    content: [{ type: "text", text: "hello" }],
+    mode: "prompt",
+    sessionMode: "persistent",
+    requestId: "req-acp-error-no-cause",
+  });
+  const { result } = await collectTurn(turn);
+
+  assert.equal(result.status, "failed");
+  if (result.status !== "failed") {
+    return;
+  }
+  assert.equal(result.error.code, "ACP_TURN_FAILED");
+  assert.equal(result.error.message, "something");
+  assert.equal(result.error.cause, undefined);
+});
+
+test("AcpRuntimeManager wraps plain Error prompt failures as ACP_TURN_FAILED with cause", async () => {
+  const record = makeSessionRecord({
+    acpxRecordId: "plain-error-session",
+    acpSessionId: "plain-error-sid",
+    agentCommand: "codex --acp",
+    cwd: "/workspace",
+  });
+  const store = new InMemorySessionStore([record]);
+  const underlying = new Error("connection lost");
+  const manager = new AcpRuntimeManager(
+    createRuntimeOptions({ cwd: "/workspace", sessionStore: store }),
+    {
+      clientFactory: () =>
+        ({
+          start: async () => {},
+          close: async () => {},
+          createSession: async () => ({ sessionId: "unused" }),
+          loadSession: async () => ({ agentSessionId: "unused" }),
+          hasReusableSession: () => true,
+          supportsLoadSession: () => true,
+          supportsResumeSession: () => false,
+          loadSessionWithOptions: async () => ({ agentSessionId: "unused" }),
+          getAgentLifecycleSnapshot: () => ({ running: true }),
+          prompt: async () => {
+            throw underlying;
+          },
+          requestCancelActivePrompt: async () => false,
+          hasActivePrompt: () => false,
+          setSessionMode: async () => {},
+          setSessionConfigOption: async () => {},
+          clearEventHandlers: () => {},
+          setEventHandlers: () => {},
+        }) as never,
+    },
+  );
+
+  const turn = manager.startTurn({
+    handle: createHandle("plain-error-session"),
+    content: [{ type: "text", text: "hello" }],
+    mode: "prompt",
+    sessionMode: "persistent",
+    requestId: "req-plain-error",
+  });
+  const { result } = await collectTurn(turn);
+
+  assert.equal(result.status, "failed");
+  if (result.status !== "failed") {
+    return;
+  }
+  assert.equal(result.error.code, "ACP_TURN_FAILED");
+  assert.equal(result.error.message, "connection lost");
+  assert.equal(result.error.cause, underlying);
+  assert.equal(result.error.retryable, false);
+  assert.equal(result.error.detailCode, undefined);
 });
 
 test("AcpRuntimeManager forwards text content blocks verbatim to session/prompt", async () => {
@@ -2711,17 +2962,19 @@ test("AcpRuntimeManager fails persistent turns clearly when session reuse is una
   });
   const { events, result } = await collectTurn(turn);
 
-  assert.deepEqual(events, []);
-  assert.deepEqual(result, {
-    status: "failed",
-    error: {
-      code: "RUNTIME",
-      detailCode: "SESSION_RESUME_REQUIRED",
-      message:
-        "Persistent ACP session persistent-backend-session could not be resumed: agent does not support session/resume or session/load",
-      retryable: true,
-    },
-  });
+  assert.equal(events.length, 0);
+  assert.equal(result.status, "failed");
+  if (result.status !== "failed") {
+    return;
+  }
+  assert.equal(result.error.code, "ACP_TURN_FAILED");
+  assert.equal(result.error.detailCode, "SESSION_RESUME_REQUIRED");
+  assert.equal(
+    result.error.message,
+    "Persistent ACP session persistent-backend-session could not be resumed: agent does not support session/resume or session/load",
+  );
+  assert.equal(result.error.retryable, true);
+  assert.ok(result.error.cause instanceof Error);
   assert.equal(createSessionCalls, 0);
   assert.equal(promptCalls, 0);
 });
@@ -2833,7 +3086,9 @@ test("AcpRuntimeManager falls back when a kept-open persistent client is no long
           hasReusableSession: () => false,
           supportsLoadSession: () => true,
           supportsResumeSession: () => false,
-          loadSessionWithOptions: async () => ({ agentSessionId: "resumed-agent-id" }),
+          loadSessionWithOptions: async () => ({
+            agentSessionId: "resumed-agent-id",
+          }),
           getAgentLifecycleSnapshot: () => ({ running: true }),
           prompt: async () => {
             secondClientPromptCalls += 1;
@@ -2882,7 +3137,11 @@ test("AcpRuntimeManager reuses a kept-open persistent client for controls before
   let promptCalls = 0;
   let closeCalls = 0;
   const setModeSessions: string[] = [];
-  const setConfigCalls: Array<{ sessionId: string; key: string; value: string }> = [];
+  const setConfigCalls: Array<{
+    sessionId: string;
+    key: string;
+    value: string;
+  }> = [];
 
   const manager = new AcpRuntimeManager(
     createRuntimeOptions({ cwd: "/workspace", sessionStore: store }),
@@ -3016,7 +3275,11 @@ function createModelsClientFactory(options: {
       supportsLoadSession: () => true,
       supportsResumeSession: () => false,
       loadSessionWithOptions: async () => ({ agentSessionId: "models-agent" }),
-      getAgentLifecycleSnapshot: () => ({ pid: 1, startedAt: "now", running: true }),
+      getAgentLifecycleSnapshot: () => ({
+        pid: 1,
+        startedAt: "now",
+        running: true,
+      }),
       prompt: async () => ({ stopReason: "end_turn" }),
       requestCancelActivePrompt: async () => false,
       hasActivePrompt: () => false,
@@ -3137,7 +3400,11 @@ test("AcpRuntimeManager getStatus sources availableModelIds from the model confi
             type: "select",
             currentValue: "sonnet",
             options: [
-              { value: "sonnet", name: "Claude Sonnet", description: "Fast and capable" },
+              {
+                value: "sonnet",
+                name: "Claude Sonnet",
+                description: "Fast and capable",
+              },
               { value: "opus", name: "Claude Opus" },
             ],
           },
@@ -3227,7 +3494,10 @@ test("AcpRuntimeManager forwards sessionOptions to createClient on fresh session
           initializeResult: { protocolVersion: 1, agentCapabilities: {} },
           start: async () => {},
           close: async () => {},
-          createSession: async () => ({ sessionId: "new-sid", agentSessionId: "agent-sid" }),
+          createSession: async () => ({
+            sessionId: "new-sid",
+            agentSessionId: "agent-sid",
+          }),
           loadSession: async () => ({ agentSessionId: "unused" }),
           hasReusableSession: () => false,
           supportsLoadSession: () => true,
@@ -3254,7 +3524,9 @@ test("AcpRuntimeManager forwards sessionOptions to createClient on fresh session
   });
 
   assert.equal(factoryCalls.length, 1);
-  assert.deepEqual(factoryCalls[0]?.sessionOptions, { systemPrompt: "Be terse." });
+  assert.deepEqual(factoryCalls[0]?.sessionOptions, {
+    systemPrompt: "Be terse.",
+  });
   assert.deepEqual(record.acpx?.session_options, {
     model: undefined,
     allowed_tools: undefined,
@@ -3520,8 +3792,18 @@ test("AcpRuntimeManager getStatus surfaces token usage breakdowns and available 
       currency: "USD",
     },
     perRequest: {
-      "msg-1": { inputTokens: 500, outputTokens: 125, thoughtTokens: 25, totalTokens: 650 },
-      "msg-2": { inputTokens: 500, outputTokens: 125, thoughtTokens: 50, totalTokens: 675 },
+      "msg-1": {
+        inputTokens: 500,
+        outputTokens: 125,
+        thoughtTokens: 25,
+        totalTokens: 650,
+      },
+      "msg-2": {
+        inputTokens: 500,
+        outputTokens: 125,
+        thoughtTokens: 50,
+        totalTokens: 675,
+      },
     },
   });
 

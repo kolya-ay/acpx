@@ -17,10 +17,13 @@ import type {
   SessionRecord,
 } from "../../types.js";
 import type { SessionAgentOptions } from "../engine/session-options.js";
+import type { AcpRuntimeErrorCode } from "./errors.js";
 
 export type { SessionAgentOptions, SystemPromptOption } from "../engine/session-options.js";
 
 export type { AcpPermissionDecision, AcpPermissionRequest } from "../../types.js";
+
+export type { AcpRuntimeErrorCode } from "./errors.js";
 
 /**
  * SDK shapes re-exported from `acpx/runtime` so embedders can type acpx's
@@ -293,21 +296,23 @@ export type AcpRuntimeEvent =
     }
   /**
    * Compatibility failure event emitted by runTurn(...). startTurn(...).events
-   * does not emit terminal events; use AcpRuntimeTurn.result instead.
+   * does not emit terminal events; use AcpRuntimeTurn.result instead. Mirrors
+   * {@link AcpRuntimeTurnResultError} — `code` is the structured runtime error
+   * enum, `retryable` is always present, and `cause` carries the original
+   * error chain (typically the `AcpRuntimeError` instance) when available.
    */
-  | {
-      type: "error";
-      message: string;
-      code?: string;
-      detailCode?: string;
-      retryable?: boolean;
-    };
+  | ({ type: "error" } & AcpRuntimeTurnResultError);
 
 export type AcpRuntimeTurnResultError = {
   message: string;
-  code?: string;
+  /** Structured runtime error code from {@link AcpRuntimeError}. */
+  code: AcpRuntimeErrorCode;
+  /** Optional ACP-protocol detail code, when sourced from the wire. */
   detailCode?: string;
-  retryable?: boolean;
+  /** True when the error is transient and the operation can be retried. */
+  retryable: boolean;
+  /** Original error chain — typically the AcpRuntimeError instance (or its cause). */
+  cause?: unknown;
 };
 
 export type AcpRuntimeTurnResult =

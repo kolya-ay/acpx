@@ -7,7 +7,7 @@ import type {
   SessionConfigSelectOption,
 } from "@agentclientprotocol/sdk";
 import { AcpClient } from "../../acp/client.js";
-import { normalizeOutputError } from "../../acp/error-normalization.js";
+import { formatErrorMessage, isRetryablePromptError } from "../../acp/error-normalization.js";
 import { extractAcpError, isAcpResourceNotFoundError } from "../../acp/error-shapes.js";
 import { modelStateFromConfigOptions } from "../../acp/model-support.js";
 import { withTimeout } from "../../async-control.js";
@@ -60,6 +60,7 @@ import type {
 } from "../public/contract.js";
 import { AcpRuntimeError } from "../public/errors.js";
 import { parsePromptEventLine } from "../public/events.js";
+import { asRecord } from "../public/shared.js";
 import { withConnectedSession } from "./connected-session.js";
 import {
   applyConversation,
@@ -227,18 +228,17 @@ function resumePolicyForSessionMode(mode: "persistent" | "oneshot"): SessionResu
 
 function legacyTerminalEventFromTurnResult(result: AcpRuntimeTurnResult): AcpRuntimeEvent {
   if (result.status === "failed") {
-    return {
-      type: "error",
-      message: result.error.message,
-      ...(result.error.code ? { code: result.error.code } : {}),
-      ...(result.error.detailCode ? { detailCode: result.error.detailCode } : {}),
-      ...(result.error.retryable === undefined ? {} : { retryable: result.error.retryable }),
-    };
+    return { type: "error", ...result.error };
   }
   return {
     type: "done",
     ...(result.stopReason ? { stopReason: result.stopReason } : {}),
   };
+}
+
+function readDetailCode(meta: Record<string, unknown> | undefined): string | undefined {
+  const value = meta?.detailCode;
+  return typeof value === "string" && value.length > 0 ? value : undefined;
 }
 
 function statusSummary(record: SessionRecord): string {
@@ -1199,14 +1199,22 @@ export class AcpRuntimeManager {
 
   private failRuntimeTurn(task: RuntimeTurnTask, error: unknown): void {
     task.sessionReady.reject(error);
-    const normalized = normalizeOutputError(error, { origin: "runtime" });
+    const acpError =
+      error instanceof AcpRuntimeError
+        ? error
+        : new AcpRuntimeError("ACP_TURN_FAILED", formatErrorMessage(error), { cause: error });
+    const meta = asRecord(error);
+    const retryable =
+      typeof meta?.retryable === "boolean" ? meta.retryable : isRetryablePromptError(error);
+    const detailCode = readDetailCode(meta);
     task.settleResult({
       status: "failed",
       error: {
-        message: normalized.message,
-        ...(normalized.code ? { code: normalized.code } : {}),
-        ...(normalized.detailCode ? { detailCode: normalized.detailCode } : {}),
-        ...(normalized.retryable !== undefined ? { retryable: normalized.retryable } : {}),
+        message: acpError.message,
+        code: acpError.code,
+        retryable,
+        ...(detailCode ? { detailCode } : {}),
+        cause: acpError.cause,
       },
     });
   }
