@@ -2,6 +2,7 @@ import type {
   AgentCapabilities,
   AnyMessage,
   AvailableCommand,
+  Error as AcpError,
   McpServer,
   PlanEntry,
   RequestPermissionRequest,
@@ -13,6 +14,7 @@ import type {
   ToolKind,
 } from "@agentclientprotocol/sdk";
 export type { McpServer, SessionNotification } from "@agentclientprotocol/sdk";
+export type { AcpError };
 import type { PromptInput } from "./prompt-content.js";
 
 export type AcpPermissionRequest = {
@@ -116,12 +118,6 @@ export const QUEUE_ERROR_DETAIL_CODES = [
 ] as const;
 export type QueueErrorDetailCode = (typeof QUEUE_ERROR_DETAIL_CODES)[number];
 
-export type OutputErrorAcpPayload = {
-  code: number;
-  message: string;
-  data?: unknown;
-};
-
 export type PermissionStats = {
   requested: number;
   approved: number;
@@ -195,7 +191,7 @@ export interface OutputFormatter {
     origin?: OutputErrorOrigin;
     message: string;
     retryable?: boolean;
-    acp?: OutputErrorAcpPayload;
+    acp?: AcpError;
     timestamp?: string;
   }): void;
   onPermissionEscalation(event: PermissionEscalationEvent): void;

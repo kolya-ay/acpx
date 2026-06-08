@@ -54,11 +54,11 @@ import {
   writeSessionRecord,
 } from "../../session/persistence.js";
 import type {
+  AcpError,
   AcpJsonRpcMessage,
   AuthPolicy,
   McpServer,
   NonInteractivePermissionPolicy,
-  OutputErrorAcpPayload,
   OutputErrorCode,
   OutputErrorOrigin,
   OutputFormatter,
@@ -112,7 +112,7 @@ class QueueTaskOutputFormatter implements OutputFormatter {
     origin?: OutputErrorOrigin;
     message: string;
     retryable?: boolean;
-    acp?: OutputErrorAcpPayload;
+    acp?: AcpError;
     timestamp?: string;
   }): void {
     this.send({

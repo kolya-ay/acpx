@@ -8,8 +8,8 @@ import {
   EXIT_CODES,
   OUTPUT_ERROR_CODES,
   OUTPUT_ERROR_ORIGINS,
+  type AcpError,
   type ExitCode,
-  type OutputErrorAcpPayload,
   type OutputErrorCode,
   type OutputErrorOrigin,
 } from "../types.js";
@@ -27,7 +27,7 @@ type ErrorMeta = {
   detailCode?: string;
   origin?: OutputErrorOrigin;
   retryable?: boolean;
-  acp?: OutputErrorAcpPayload;
+  acp?: AcpError;
 };
 
 export type NormalizedOutputError = {
@@ -36,7 +36,7 @@ export type NormalizedOutputError = {
   detailCode?: string;
   origin?: OutputErrorOrigin;
   retryable?: boolean;
-  acp?: OutputErrorAcpPayload;
+  acp?: AcpError;
 };
 
 export type NormalizeOutputErrorOptions = {
@@ -44,7 +44,7 @@ export type NormalizeOutputErrorOptions = {
   detailCode?: string;
   origin?: OutputErrorOrigin;
   retryable?: boolean;
-  acp?: OutputErrorAcpPayload;
+  acp?: AcpError;
 };
 
 function isAuthRequiredMessage(value: string | undefined): boolean {
@@ -63,7 +63,7 @@ function isAuthRequiredMessage(value: string | undefined): boolean {
   ].some((needle) => normalized.includes(needle));
 }
 
-function isAcpAuthRequiredPayload(acp: OutputErrorAcpPayload | undefined): boolean {
+function isAcpAuthRequiredPayload(acp: AcpError | undefined): boolean {
   if (!acp) {
     return false;
   }
@@ -218,7 +218,7 @@ function resolveOutputErrorCode(
 
 function resolveDetailCode(
   error: unknown,
-  acp: OutputErrorAcpPayload | undefined,
+  acp: AcpError | undefined,
   options: NormalizeOutputErrorOptions,
   meta: ErrorMeta,
 ): string | undefined {
@@ -270,7 +270,7 @@ function isNonRetryablePromptError(error: unknown): boolean {
   );
 }
 
-function isPermanentPromptAcpError(acp: OutputErrorAcpPayload): boolean {
+function isPermanentPromptAcpError(acp: AcpError): boolean {
   return (
     acp.code === -32001 ||
     acp.code === -32002 ||

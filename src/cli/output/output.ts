@@ -15,9 +15,9 @@ import {
 } from "../../acp/jsonrpc.js";
 import { asRecord } from "../../runtime/public/shared.js";
 import type {
+  AcpError,
   AcpJsonRpcMessage,
   ClientOperation,
-  OutputErrorAcpPayload,
   OutputErrorCode,
   OutputFormatterContext,
   OutputFormat,
@@ -39,7 +39,7 @@ type RenderableOutputError = {
   origin?: OutputErrorOrigin;
   message: string;
   retryable?: boolean;
-  acp?: OutputErrorAcpPayload;
+  acp?: AcpError;
   timestamp?: string;
 };
 
@@ -1146,7 +1146,7 @@ class QuietOutputFormatter implements OutputFormatter {
     origin?: OutputErrorOrigin;
     message: string;
     retryable?: boolean;
-    acp?: OutputErrorAcpPayload;
+    acp?: AcpError;
     timestamp?: string;
   }): void {
     // no-op in quiet mode
