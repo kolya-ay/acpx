@@ -12,8 +12,8 @@ import {
 } from "../prompt-content.js";
 import { runOnce } from "../session/session.js";
 import type {
+  AcpError,
   AcpJsonRpcMessage,
-  OutputErrorAcpPayload,
   OutputErrorCode,
   OutputErrorOrigin,
   OutputFormatter,
@@ -87,7 +87,7 @@ class CaptureFormatter implements OutputFormatter {
     origin?: OutputErrorOrigin;
     message: string;
     retryable?: boolean;
-    acp?: OutputErrorAcpPayload;
+    acp?: AcpError;
     timestamp?: string;
   }): void {
     void params;

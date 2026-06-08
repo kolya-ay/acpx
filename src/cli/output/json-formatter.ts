@@ -1,7 +1,7 @@
 import { buildJsonRpcErrorResponse } from "../../acp/jsonrpc-error.js";
 import { asRecord } from "../../runtime/public/shared.js";
 import type {
-  OutputErrorAcpPayload,
+  AcpError,
   OutputErrorCode,
   OutputErrorOrigin,
   OutputFormatter,
@@ -238,7 +238,7 @@ class JsonOutputFormatter implements OutputFormatter {
     origin?: OutputErrorOrigin;
     message: string;
     retryable?: boolean;
-    acp?: OutputErrorAcpPayload;
+    acp?: AcpError;
     timestamp?: string;
   }): void {
     this.stdout.write(

@@ -1,11 +1,11 @@
-import type { OutputErrorAcpPayload, OutputErrorCode, OutputErrorOrigin } from "./types.js";
+import type { AcpError, OutputErrorCode, OutputErrorOrigin } from "./types.js";
 
 type AcpxErrorOptions = ErrorOptions & {
   outputCode?: OutputErrorCode;
   detailCode?: string;
   origin?: OutputErrorOrigin;
   retryable?: boolean;
-  acp?: OutputErrorAcpPayload;
+  acp?: AcpError;
   outputAlreadyEmitted?: boolean;
 };
 
@@ -14,7 +14,7 @@ export class AcpxOperationalError extends Error {
   readonly detailCode?: string;
   readonly origin?: OutputErrorOrigin;
   readonly retryable?: boolean;
-  readonly acp?: OutputErrorAcpPayload;
+  readonly acp?: AcpError;
   readonly outputAlreadyEmitted?: boolean;
 
   constructor(message: string, options?: AcpxErrorOptions) {

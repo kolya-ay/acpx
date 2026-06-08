@@ -22,6 +22,8 @@ import { deriveAgentFromSessionKey, type AcpxHandleState } from "./runtime/publi
 export { DEFAULT_AGENT_NAME, createFileSessionStore };
 export { AcpRuntimeError, isAcpRuntimeError } from "./runtime/public/errors.js";
 export type { AcpRuntimeErrorCode } from "./runtime/public/errors.js";
+export { RequestError } from "@agentclientprotocol/sdk";
+export type { AcpError } from "./types.js";
 export {
   REQUESTED_MODEL_UNSUPPORTED_ERROR_CODE,
   REQUESTED_MODEL_UNSUPPORTED_REASONS,

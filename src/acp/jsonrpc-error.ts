@@ -1,4 +1,4 @@
-import type { OutputErrorAcpPayload, OutputErrorCode, OutputErrorOrigin } from "../types.js";
+import type { AcpError, OutputErrorCode, OutputErrorOrigin } from "../types.js";
 
 export const OUTPUT_ERROR_JSONRPC_CODES: Record<OutputErrorCode, number> = {
   NO_SESSION: -32002,
@@ -24,11 +24,11 @@ export type BuildJsonRpcErrorParams = {
   retryable?: boolean;
   timestamp?: string;
   sessionId?: string;
-  acp?: OutputErrorAcpPayload;
+  acp?: AcpError;
 };
 
 function hasValidAcpError(
-  acp: OutputErrorAcpPayload | undefined,
+  acp: AcpError | undefined,
 ): acp is { code: number; message: string; data?: unknown } {
   return Boolean(
     acp &&

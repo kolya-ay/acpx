@@ -1,9 +1,10 @@
+import { RequestError } from "@agentclientprotocol/sdk";
 import { asRecord } from "../runtime/public/shared.js";
-import type { OutputErrorAcpPayload } from "../types.js";
+import type { AcpError } from "../types.js";
 
 const RESOURCE_NOT_FOUND_ACP_CODES = new Set([-32001, -32002]);
 
-export function toAcpErrorPayload(value: unknown): OutputErrorAcpPayload | undefined {
+export function toAcpErrorPayload(value: unknown): AcpError | undefined {
   const record = asRecord(value);
   if (!record) {
     return undefined;
@@ -23,9 +24,13 @@ export function toAcpErrorPayload(value: unknown): OutputErrorAcpPayload | undef
   };
 }
 
-function extractAcpErrorInternal(value: unknown, depth: number): OutputErrorAcpPayload | undefined {
+function extractAcpErrorInternal(value: unknown, depth: number): AcpError | undefined {
   if (depth > 5) {
     return undefined;
+  }
+
+  if (value instanceof RequestError) {
+    return { code: value.code, message: value.message, data: value.data };
   }
 
   const direct = toAcpErrorPayload(value);
@@ -44,7 +49,7 @@ function extractAcpErrorInternal(value: unknown, depth: number): OutputErrorAcpP
 function extractNestedAcpError(
   record: Record<string, unknown>,
   depth: number,
-): OutputErrorAcpPayload | undefined {
+): AcpError | undefined {
   for (const key of ["error", "acp", "cause"] as const) {
     if (key in record) {
       const nested = extractAcpErrorInternal(record[key], depth + 1);
@@ -118,7 +123,7 @@ function hasSessionNotFoundHint(value: unknown, depth = 0): boolean {
   return Object.values(record).some((entry) => hasSessionNotFoundHint(entry, depth + 1));
 }
 
-export function extractAcpError(error: unknown): OutputErrorAcpPayload | undefined {
+export function extractAcpError(error: unknown): AcpError | undefined {
   return extractAcpErrorInternal(error, 0);
 }
 

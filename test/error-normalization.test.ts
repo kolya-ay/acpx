@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { RequestError } from "@agentclientprotocol/sdk";
 import {
   exitCodeForOutputErrorCode,
+  extractAcpError,
   normalizeOutputError,
   isAcpQueryClosedBeforeResponseError,
   isAcpResourceNotFoundError,
@@ -158,6 +160,15 @@ test("normalizeOutputError extracts ACP payload from wrapped errors", () => {
     method: "session/set_mode",
     modeId: "plan",
   });
+});
+
+test("extractAcpError extracts shape from SDK RequestError instance", () => {
+  const sdkError = RequestError.resourceNotFound("file:///missing.txt");
+  const result = extractAcpError(sdkError);
+  assert.ok(result);
+  assert.equal(result.code, sdkError.code);
+  assert.equal(result.message, sdkError.message);
+  assert.deepEqual(result.data, sdkError.data);
 });
 
 test("exitCodeForOutputErrorCode maps machine codes to stable exits", () => {

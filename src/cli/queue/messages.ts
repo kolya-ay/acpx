@@ -7,7 +7,7 @@ import {
   OUTPUT_ERROR_CODES,
   OUTPUT_ERROR_ORIGINS,
   type AcpClientOptions,
-  type OutputErrorAcpPayload,
+  type AcpError,
   type OutputErrorCode,
   type OutputErrorOrigin,
   type PermissionEscalationEvent,
@@ -159,7 +159,7 @@ export type QueueOwnerErrorMessage = {
   origin?: OutputErrorOrigin;
   message: string;
   retryable?: boolean;
-  acp?: OutputErrorAcpPayload;
+  acp?: AcpError;
   outputAlreadyEmitted?: boolean;
 };
 
