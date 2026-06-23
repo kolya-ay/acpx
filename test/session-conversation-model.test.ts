@@ -11,7 +11,7 @@ import {
   recordPromptSubmission,
   recordSessionUpdate,
 } from "../src/session/conversation-model.js";
-import type { SessionAcpxState } from "../src/types.js";
+import type { SessionAcpxState, SessionAgentMessage } from "../src/types.js";
 
 test("conversation model captures prompt, chunks, tool calls, and metadata", () => {
   const conversation = createSessionConversation("2026-02-27T10:00:00.000Z");
@@ -478,4 +478,46 @@ test("cloneSessionAcpxState preserves current_plan", () => {
   assert.deepEqual(cloned?.current_plan, original.current_plan);
   assert.notEqual(cloned?.current_plan, original.current_plan);
   assert.notEqual(cloned?.current_plan?.entries, original.current_plan?.entries);
+});
+
+function streamAgentChunks(
+  sessionUpdate: "agent_message_chunk" | "agent_thought_chunk",
+  chunks: readonly string[],
+): SessionAgentMessage {
+  const conversation = createSessionConversation("2026-06-23T00:00:00.000Z");
+  let acpxState: SessionAcpxState | undefined;
+  chunks.forEach((text, index) => {
+    acpxState = recordSessionUpdate(
+      conversation,
+      acpxState,
+      {
+        sessionId: "session-1",
+        update: { sessionUpdate, content: { type: "text", text } },
+      } as SessionNotification,
+      `2026-06-23T00:00:${String(index).padStart(2, "0")}.000Z`,
+    );
+  });
+  const message = conversation.messages.at(-1);
+  assert.ok(message && typeof message === "object" && "Agent" in message, "expected Agent message");
+  return message.Agent;
+}
+
+// Regression: whitespace-only chunks ("\n", pure-indent) were being dropped by
+// a .trim()-based guard, while the live SSE path emits them. A streamed
+// "```python", "\n", "def foo():" sequence collapsed to "```pythondef foo():"
+// and broke fenced-code parsing on reload.
+test("agent_message_chunk preserves whitespace-only chunks (byte-parity with stream)", () => {
+  const chunks = ["```python", "\n", "def foo():", "\n", "    return 1", "\n", "```"];
+  const agent = streamAgentChunks("agent_message_chunk", chunks);
+  const persisted = agent.content.map((entry) => ("Text" in entry ? entry.Text : "")).join("");
+  assert.equal(persisted, chunks.join(""));
+});
+
+test("agent_thought_chunk preserves whitespace-only chunks (byte-parity with stream)", () => {
+  const chunks = ["thinking step 1", "\n", "  indented continuation", "\n", "done"];
+  const agent = streamAgentChunks("agent_thought_chunk", chunks);
+  const persisted = agent.content
+    .map((entry) => ("Thinking" in entry ? entry.Thinking.text : ""))
+    .join("");
+  assert.equal(persisted, chunks.join(""));
 });
