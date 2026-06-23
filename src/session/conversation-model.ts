@@ -199,10 +199,6 @@ function ensureAgentMessage(conversation: SessionConversation): SessionAgentMess
 }
 
 function appendAgentText(agent: SessionAgentMessage, text: string): void {
-  if (!text.trim()) {
-    return;
-  }
-
   const last = agent.content.at(-1);
   if (last && isAgentTextContent(last)) {
     last.Text = trimRuntimeText(`${last.Text}${text}`, MAX_RUNTIME_AGENT_TEXT_CHARS);
@@ -216,10 +212,6 @@ function appendAgentText(agent: SessionAgentMessage, text: string): void {
 }
 
 function appendAgentThinking(agent: SessionAgentMessage, text: string): void {
-  if (!text.trim()) {
-    return;
-  }
-
   const last = agent.content.at(-1);
   if (last && isAgentThinkingContent(last)) {
     last.Thinking.text = trimRuntimeText(
