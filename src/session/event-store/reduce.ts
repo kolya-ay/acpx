@@ -54,7 +54,9 @@ export type SessionState = {
   configOptions?: Record<string, SessionConfigOption["currentValue"]>;
   desiredModeId?: SessionModeId | null;
   desiredModelId?: string | null;
-  desiredConfigOptions?: Record<string, SessionConfigOption["currentValue"] | null>;
+  // Desired config options narrow to string|null (disk format constraint).
+  // Snapshot map only stores set entries; null events delete the key.
+  desiredConfigOptions?: Record<string, string>;
   sessionInfo?: SessionInfoUpdatePayload;
   // Snapshot of latest UsageUpdate. SDK semantics: `used`/`size` are
   // current-context-window snapshots; `cost.amount` is cumulative session

@@ -2,7 +2,6 @@ import { strict as assert } from "node:assert";
 import test from "node:test";
 import { ACPX_EVENT_SCHEMA } from "../src/session/event-store/events.js";
 import {
-  synthesizeAgentLifecycleSnapshot,
   synthesizeClose,
   synthesizeDesiredState,
   synthesizeHeader,
@@ -104,18 +103,5 @@ test("synthesizeReconnected carries acpSessionId", () => {
   if (ev.kind === "session_reconnected") {
     assert.equal(ev.acpSessionId, "acp-2");
     assert.equal(ev.seq, 3);
-  }
-});
-
-test("synthesizeAgentLifecycleSnapshot carries pid/agentStartedAt/lastPromptAt", () => {
-  const ev = synthesizeAgentLifecycleSnapshot(
-    makeRecord({ pid: 99, agentStartedAt: TS, lastPromptAt: TS }),
-    5,
-  );
-  assert.equal(ev.kind, "agent_lifecycle_snapshot");
-  if (ev.kind === "agent_lifecycle_snapshot") {
-    assert.equal(ev.pid, 99);
-    assert.equal(ev.agentStartedAt, TS);
-    assert.equal(ev.lastPromptAt, TS);
   }
 });

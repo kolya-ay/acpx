@@ -93,18 +93,3 @@ export function synthesizeReconnected(record: SessionRecord, seq: number): AcpxD
     acpSessionId: record.acpSessionId,
   };
 }
-
-export function synthesizeAgentLifecycleSnapshot(
-  record: SessionRecord,
-  seq: number,
-): AcpxDomainEvent {
-  return {
-    kind: "agent_lifecycle_snapshot",
-    seq,
-    ts: stateTs(record),
-    schema: ACPX_EVENT_SCHEMA,
-    pid: record.pid,
-    agentStartedAt: record.agentStartedAt,
-    lastPromptAt: record.lastPromptAt,
-  };
-}

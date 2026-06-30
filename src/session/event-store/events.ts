@@ -138,7 +138,10 @@ export type AcpxDomainEvent =
       ts: string;
       schema: typeof ACPX_EVENT_SCHEMA;
       configId: string;
-      value: SessionConfigOption["currentValue"] | null;
+      // Domain event value is narrowed to string | null to match the disk
+      // format (Record<string, string> in SessionAcpxState.desired_config_options).
+      // Callers must coerce booleans/numbers before calling setDesired.
+      value: string | null;
     }
   | {
       kind: "session_renamed";
