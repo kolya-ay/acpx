@@ -49,7 +49,7 @@ export type AcpxWireEvent =
       ts: string;
       toolCallId: string;
       title?: string;
-      toolKind?: ToolKind | null;
+      toolKind?: ToolKind;
       status?: ToolCallStatus;
       content?: ToolCallContent[];
       locations?: ToolCallLocation[];
