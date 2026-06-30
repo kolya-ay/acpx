@@ -18,6 +18,7 @@ import { createFileSessionStore } from "./runtime/public/file-session-store.js";
 import { decodeAcpxRuntimeHandleState, writeHandleState } from "./runtime/public/handle-state.js";
 import { normalizeRuntimeDetails, probeRuntime } from "./runtime/public/probe.js";
 import { deriveAgentFromSessionKey, type AcpxHandleState } from "./runtime/public/shared.js";
+import { createEventStore, fileStorage } from "./session/event-store/index.js";
 
 export { DEFAULT_AGENT_NAME, createFileSessionStore };
 export { AcpRuntimeError, isAcpRuntimeError } from "./runtime/public/errors.js";
@@ -300,7 +301,8 @@ export class AcpxRuntime implements AcpxRuntimeLike {
     }
     if (!this.managerPromise) {
       this.managerPromise = Promise.resolve(
-        this.testOptions?.managerFactory?.(this.options) ?? new AcpRuntimeManager(this.options),
+        this.testOptions?.managerFactory?.(this.options) ??
+          new AcpRuntimeManager(this.options, { eventStore: createEventStore(fileStorage()) }),
       ).then((manager) => {
         this.manager = manager;
         return manager;
@@ -365,3 +367,34 @@ export function createAcpRuntime(options: AcpRuntimeOptions): AcpxRuntime {
 export function createRuntimeStore(options: { stateDir: string }): AcpSessionStore {
   return createFileSessionStore(options);
 }
+
+// --- Event-First API (additive surface; see src/session/event-store/) ---
+
+export type {
+  AcpxDomainEvent,
+  AcpxDomainKind,
+  AcpxEvent,
+  AcpxWireEvent,
+  AcpxWireKind,
+  CreateSessionInput,
+  DesiredStatePatch,
+  EventStore,
+  ReducedMessage,
+  SessionExitInfo,
+  SessionInfoUpdatePayload,
+  SessionState,
+  StoragePrimitives,
+  ToolCallSnapshot,
+} from "./session/event-store/index.js";
+export {
+  ACPX_EVENT_SCHEMA,
+  SessionClosedError,
+  SessionExistsError,
+  SessionNotFoundError,
+  createEventStore,
+  fileStorage,
+  fromAcp,
+  isAcpxDomainKind,
+  memoryStorage,
+  reduce,
+} from "./session/event-store/index.js";

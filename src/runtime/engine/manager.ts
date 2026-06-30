@@ -5,6 +5,7 @@ import type {
   ContentBlock,
   SessionConfigOption,
   SessionConfigSelectOption,
+  SessionUpdate,
 } from "@agentclientprotocol/sdk";
 import { AcpClient } from "../../acp/client.js";
 import { formatErrorMessage, isRetryablePromptError } from "../../acp/error-normalization.js";
@@ -26,6 +27,9 @@ import {
   trimConversationForRuntime,
 } from "../../session/conversation-model.js";
 import { defaultSessionEventLog } from "../../session/event-log.js";
+import type { AcpxEvent } from "../../session/event-store/events.js";
+import { fromAcp } from "../../session/event-store/from-acp.js";
+import type { EventStore } from "../../session/event-store/types.js";
 import { LiveSessionCheckpoint } from "../../session/live-checkpoint.js";
 import {
   clearDesiredConfigOption,
@@ -61,6 +65,7 @@ import type {
 import { AcpRuntimeError } from "../public/errors.js";
 import { parsePromptEventLine } from "../public/events.js";
 import { asRecord } from "../public/shared.js";
+import { createBus, type Bus } from "./bus.js";
 import { withConnectedSession } from "./connected-session.js";
 import {
   applyConversation,
@@ -78,6 +83,7 @@ import {
 
 export type AcpRuntimeManagerDeps = {
   clientFactory?: (options: ConstructorParameters<typeof AcpClient>[0]) => AcpClient;
+  eventStore?: EventStore;
 };
 
 type ActiveSessionController = {
@@ -535,11 +541,27 @@ export class AcpRuntimeManager {
   private readonly activeControllers = new Map<string, ActiveSessionController>();
   private readonly pendingPersistentClients = new Map<string, AcpClient>();
   private readonly closingActiveRecords = new Set<string>();
+  // Live bus seq is independent of EventStore's persisted seq; the two streams
+  // are intentionally separate. Do not try to unify them.
+  private readonly bus: Bus<AcpxEvent> = createBus<AcpxEvent>();
+  private acpxSeq = 0;
 
   constructor(
     private readonly options: AcpRuntimeOptions,
     private readonly deps: AcpRuntimeManagerDeps = {},
   ) {}
+
+  onEvent(handler: (ev: AcpxEvent) => void): () => void {
+    return this.bus.subscribe(handler);
+  }
+
+  events(): AsyncIterable<AcpxEvent> {
+    return this.bus.iterate();
+  }
+
+  private dispatchEvent(ev: AcpxEvent): void {
+    this.bus.dispatch(ev);
+  }
 
   private createClient(options: ConstructorParameters<typeof AcpClient>[0]): AcpClient {
     return this.deps.clientFactory?.(options) ?? new AcpClient(options);
@@ -1068,6 +1090,7 @@ export class AcpRuntimeManager {
           method: "session/update",
           params: notification,
         });
+        this.mirrorSessionUpdateToEventFirst(turn, notification.update);
       },
       onClientOperation: (operation: ClientOperation) => {
         turn.acpxState = recordClientOperation(turn.conversation, turn.acpxState, operation);
@@ -1087,6 +1110,24 @@ export class AcpRuntimeManager {
       return;
     }
     task.queue.push(parsed);
+  }
+
+  // Mirror to event-first API: dispatch AcpxEvent to live bus + persist via
+  // EventStore. Live bus seq (this.acpxSeq) is independent of the EventStore's
+  // persisted seq counter; live and persisted streams may diverge.
+  private mirrorSessionUpdateToEventFirst(turn: RunningRuntimeTurn, update: SessionUpdate): void {
+    const ts = new Date().toISOString();
+    const acpxEvents = fromAcp(update, ++this.acpxSeq, ts);
+    for (const ev of acpxEvents) {
+      this.dispatchEvent(ev);
+    }
+    const eventStore = this.deps.eventStore;
+    if (!eventStore) {
+      return;
+    }
+    void eventStore.appendWire(turn.record.acpxRecordId, update, ts).catch((e) => {
+      console.warn(`acpx eventStore.appendWire failed: ${String(e)}`);
+    });
   }
 
   private async connectRuntimeTurn(
