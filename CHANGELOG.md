@@ -19,6 +19,12 @@ Repo: https://github.com/openclaw/acpx
 
 ### Changes
 
+- Runtime/library: add event-first API. `AcpxEvent` (21-kind discriminated
+  union), `reduce`, `fromAcp`, `createEventStore` + `fileStorage`/`memoryStorage`,
+  and `onEvent`/`events()` on `AcpRuntimeManager`. Disk format unchanged; the
+  existing `AcpSessionStore` exports remain. See `src/runtime.ts` for the full
+  new surface.
+
 ### Breaking
 
 ### Fixes
